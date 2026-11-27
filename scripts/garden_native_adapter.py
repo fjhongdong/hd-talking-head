@@ -15,8 +15,8 @@ from motion_native_skill_adapter import relative, path, descriptor, exact, task_
 ENTRY='scripts/garden_native_adapter.py'
 DEPENDENCY_ID='garden-motion-showreel'
 VERSION='1.0.0'
-RENDERER_VERSION='garden-2b9a89340b70'
-SOURCE_PIN='2b9a89340b70f632d31c0f1c69fce94a7912423e'
+RENDERER_VERSION='garden-f2d7adeaf53d'
+SOURCE_PIN='f2d7adeaf53dcce3d0eb19cbffe8c04f4c636c2a'
 PROJECT=SKILL
 
 def source_root(project=SKILL, *, dependency_id=DEPENDENCY_ID):
@@ -329,6 +329,8 @@ def capture_render(job_dir,brief_path,argv=None,*,native_preparations=None):
     qa=directory/'qa'
     if any((qa/name).exists() or (qa/name).is_symlink() for name in ('native-phone.png','native-sheet.png')):
         raise ValueError('Preserve existing Garden QA outputs')
+    from text_card_layout import install_card_css
+    install_card_css(directory, 'index.html')
     before=project_files(root,directory); dependencies=runtime_files(root,directory)
     call={'schema_version':1,'status':'running','dependency_id':DEPENDENCY_ID,'request_sha256':hashlib.sha256(payload).hexdigest(),
           'upstream_commit':SOURCE_PIN,'renderer_version':RENDERER_VERSION,'project_files':before,'runtime_files':dependencies,'steps':[]}

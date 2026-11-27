@@ -1262,8 +1262,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             (0, {"text": "自，"}), (2, {"text": "，"}),
             (1, {"speaker_id": "speaker_1"}), (2, {"speaker_id": "speaker_1"}),
             (2, {"start": 0.40, "end": 0.40}),
-            (2, {"start": 0.70, "end": 0.80}),
-            (2, {"start": 0.40, "end": 0.95}),
+            (2, {"start": 2.11, "end": 2.20}),
             (2, {"start": 0.26}), (2, {"end": float("nan")}),
         ):
             case = copy.deepcopy(base)
@@ -1277,7 +1276,102 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         for payload in cases:
             with self.subTest(payload=payload):
                 with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
-                    speech_edit_v2._normalize_video_use_words(payload, 2.0)
+                    speech_edit_v2._normalize_video_use_words(payload, 3.0)
+
+    def test_video_use_direct_zero_word_protects_gap_and_keeps_next_word(self) -> None:
+        for before, zero, after in (
+            ((47.14, 47.16), 47.30, (47.98, 48.14)),
+            ((0.10, 0.25), 0.27, (0.70, 0.80)),
+            ((0.10, 0.25), 0.27, (0.40, 0.95)),
+        ):
+            with self.subTest(after=after):
+                payload = {"words": [
+                    {"type": "word", "text": "到", "start": before[0], "end": before[1],
+                     "speaker_id": "speaker_0"},
+                    {"type": "word", "text": "手", "start": zero, "end": zero,
+                     "speaker_id": "speaker_0"},
+                    {"type": "word", "text": "直", "start": after[0], "end": after[1],
+                     "speaker_id": "speaker_0"},
+                ]}
+                original = copy.deepcopy(payload)
+                groups = []
+                words, merged = speech_edit_v2._normalize_video_use_words(
+                    payload, 50.0, protected_groups=groups,
+                )
+                self.assertEqual([(w.text, w.start, w.end) for w in words], [
+                    ("到手", before[0], after[0]), ("直", after[0], after[1]),
+                ])
+                self.assertEqual(merged, 1)
+                self.assertEqual(payload, original)
+                self.assertEqual(groups[0]["raw_event_indices"], [0, 1])
+                self.assertEqual(groups[0]["word_index"], 0)
+                self.assertEqual(groups[0]["raw_zero_duration_time"], zero)
+                self.assertEqual(groups[0]["end_semantics"],
+                                 "conservative_protection_limit_not_speech_end")
+
+    def test_consecutive_zero_duration_words_share_one_protected_group(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "给", "start": 30.04, "end": 30.18, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "你", "start": 30.36, "end": 30.36, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "讲", "start": 30.36, "end": 30.36, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "个", "start": 30.36, "end": 30.48, "speaker_id": "speaker_0"},
+        ]}
+        original = copy.deepcopy(payload)
+        groups = []
+        words, merged = speech_edit_v2._normalize_video_use_words(payload, 31.0, protected_groups=groups)
+        self.assertEqual([(w.text, w.start, w.end) for w in words], [
+            ("给你讲", 30.04, 30.36), ("个", 30.36, 30.48),
+        ])
+        self.assertEqual(merged, 2)
+        self.assertEqual(payload, original)
+        self.assertEqual([g["raw_event_indices"] for g in groups], [[0, 1, 2]])
+        payload["words"][2]["speaker_id"] = "speaker_1"
+        with self.assertRaisesRegex(speech_edit_v2.SpeechEditV2Error, "separated"):
+            speech_edit_v2._normalize_video_use_words(payload, 31.0)
+
+    def test_consecutive_zero_words_starting_at_left_endpoint_keep_real_anchors(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "上", "start": 13.82, "end": 14.0, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "什", "start": 14.0, "end": 14.0, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "么", "start": 14.18, "end": 14.18, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "样", "start": 14.2, "end": 14.42, "speaker_id": "speaker_0"},
+        ]}
+        original = copy.deepcopy(payload)
+        groups = []
+        words, merged = speech_edit_v2._normalize_video_use_words(payload, 15.0, protected_groups=groups)
+        self.assertEqual([(w.text, w.start, w.end) for w in words], [
+            ("上什么", 13.82, 14.2), ("样", 14.2, 14.42),
+        ])
+        self.assertEqual(merged, 2)
+        self.assertEqual(payload, original)
+        self.assertEqual(groups[0]["raw_event_indices"], [0, 1, 2])
+        self.assertEqual(groups[0]["interval"], {"start": 13.82, "end": 14.2})
+        self.assertEqual(groups[0]["end_semantics"], "conservative_protection_limit_not_speech_end")
+        for event_index, updates in (
+            (2, {"speaker_id": "speaker_1"}),
+            (2, {"start": 14.3, "end": 14.3}),
+            (3, {"start": 16.0, "end": 16.2}),
+            (3, {"end": float("nan")}),
+        ):
+            case = copy.deepcopy(payload)
+            case["words"][event_index].update(updates)
+            with self.subTest(updates=updates), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                speech_edit_v2._normalize_video_use_words(case, 17.0)
+
+    def test_pcm_edge_trim_preserves_protected_group_but_trims_other_words(self) -> None:
+        rate = 16000
+        samples = array("h", [6000] * int(0.3 * rate) + [0] * int(1.1 * rate))
+        samples.extend(array("h", [6000] * int(0.2 * rate) + [0] * int(1.1 * rate)))
+        words = [
+            speech_edit_v2.transcribe.Word("到手", 0.10, 1.40),
+            speech_edit_v2.transcribe.Word("原话", 1.40, 2.70),
+        ]
+        derived, adjustments = speech_edit_v2._derive_pcm_edge_trimmed_words(
+            words, rate, samples, protected_word_indices=frozenset({0}),
+        )
+        self.assertEqual(derived[0], words[0])
+        self.assertAlmostEqual(derived[1].end, 1.68, delta=1 / rate)
+        self.assertEqual([item["word_index"] for item in adjustments], [1])
 
     def test_video_use_event_bridged_zero_word_keeps_next_word_independent(self) -> None:
         payload = {"words": [
@@ -1360,6 +1454,84 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
             speech_edit_v2._validate_cleanup_resolutions(candidates, [])
         self.assertEqual(raw, original)
+
+
+class WordTimingReviewTests(unittest.TestCase):
+    def setUp(self) -> None:
+        from types import SimpleNamespace
+
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.result = self.root / "scribe.json"
+        self.raw = {"words": [
+            {"type": "word", "text": text, "start": start, "end": end,
+             "speaker_id": "speaker_0"}
+            for text, start, end in (
+                ("给", 30.04, 30.18), ("你", 30.36, 30.36),
+                ("讲", 30.36, 30.36), ("个", 30.36, 30.48),
+                ("到", 47.14, 47.16), ("手", 47.30, 47.30),
+                ("直", 47.98, 48.14), ("好", 65.08, 65.14),
+                ("好", 67.2, 67.2), ("好在", 68.38, 68.54),
+            )
+        ]}
+        contract_artifacts.write_json_artifact(self.result, self.raw)
+        self.entrypoint = self.root / "transcribe.py"
+        self.job = SimpleNamespace(inputs={"video": {"sha256": "a" * 64}})
+        self.invocation = {
+            "entrypoint": str(self.entrypoint), "exit_code": 0,
+            "source_sha256": "a" * 64,
+            "result_sha256": contract_artifacts.sha256_file(self.result),
+        }
+        self.review = {
+            "source_sha256": self.invocation["source_sha256"],
+            "result_sha256": self.invocation["result_sha256"],
+            "event_index": 8, "text": "好", "start": 67.162, "end": 67.423,
+        }
+
+    def test_local_review_keeps_raw_and_other_zero_word_protections(self) -> None:
+        original = self.result.read_bytes()
+        with mock.patch.object(speech_edit_v2, "_video_use_entrypoint", return_value=self.entrypoint):
+            with self.assertRaisesRegex(speech_edit_v2.SpeechEditV2Error, "separated"):
+                speech_edit_v2._transcribe_with_video_use(
+                    self.job, self.result, self.invocation, 70.0,
+                )
+            words, runtime = speech_edit_v2._transcribe_with_video_use(
+                self.job, self.result, self.invocation, 70.0,
+                word_timing_review=self.review,
+            )
+        self.assertEqual([(word.text, word.start, word.end) for word in words], [
+            ("给你讲", 30.04, 30.36), ("个", 30.36, 30.48),
+            ("到手", 47.14, 47.98), ("直", 47.98, 48.14),
+            ("好", 65.08, 65.14), ("好", 67.162, 67.423), ("好在", 68.38, 68.54),
+        ])
+        self.assertEqual(runtime["merged_zero_duration_events"], 3)
+        self.assertEqual([group["raw_event_indices"]
+                          for group in runtime["protected_zero_duration_groups"]], [[0, 1, 2], [4, 5]])
+        self.assertEqual(runtime["word_timing_review"], {
+            **self.review, "source": "local_pcm_review", "raw_event": self.raw["words"][8],
+            "raw_scribe_unchanged": True,
+        })
+        self.assertEqual(self.result.read_bytes(), original)
+
+    def test_local_review_rejects_wrong_binding_event_and_interval(self) -> None:
+        invalid = [
+            {**self.review, key: value}
+            for key, value in (
+                ("source_sha256", "b" * 64), ("result_sha256", "c" * 64),
+                ("event_index", True), ("event_index", 10), ("event_index", 7),
+                ("text", "坏"), ("start", 67.3), ("end", 67.1),
+                ("start", 65.1), ("end", 68.4), ("start", float("nan")),
+                ("end", float("inf")), ("start", True),
+            )
+        ]
+        invalid.extend([{}, {**self.review, "unexpected": True}])
+        with mock.patch.object(speech_edit_v2, "_video_use_entrypoint", return_value=self.entrypoint):
+            for review in invalid:
+                with self.subTest(review=review), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2._transcribe_with_video_use(
+                        self.job, self.result, self.invocation, 70.0, word_timing_review=review,
+                    )
 
 
 if __name__ == "__main__":

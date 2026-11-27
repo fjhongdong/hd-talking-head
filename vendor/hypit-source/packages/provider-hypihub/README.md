@@ -27,6 +27,17 @@ admits them into the current Build's working byte area. Image references use Hyp
 `reference_image_urls`, `reference_videos`, and `reference_audios` fields. A single reference video
 remains in `reference_videos`; `ref_video_url` is reserved for a model's source-video port. First/last-frame images use `first_frame` and `last_frame`.
 
+`@hypit/bach@1#bach-1.0-pro` maps to `bach/bach-1.0-pro` on `POST /v1/videos`.
+It accepts text prompts, first/last-frame images, and reference images with optional reference audio.
+`duration` maps to `seconds`, `generateAudio` to `generate_audio`, and `seed` is preserved.
+Output resolution is `1080p`. Durations from 5 to 16 seconds retain their decimal value.
+The service's price card determines billed seconds. Frame requests use the service's `auto` aspect ratio.
+
+The HypiHub Bach Endpoint requires references without `startTime` offsets. Reference videos are
+unavailable while upstream input billing is being verified. These requests return unsupported
+before upload or generation; the Model package retains its complete reference vocabulary for
+Endpoints that support it. The configured account's model catalogue determines Bach availability.
+
 Seedance 2.5 (`@hypit/seedance` model `2.5`) maps to `seedance-2.5` and supports
 `480p`, `720p` and `1080p`. The Provider passes the authored `resolution` to `POST /v1/videos`;
 omitting it in the Seedance Surface defaults to `720p`.
@@ -198,6 +209,9 @@ reference to produce independent speech. All of them use `POST /v1/audio/speech`
 | `@hypit/fishaudio-speech` | `voice-design-1` | `fishaudio/voice-design-1` | `input`, `voice_description` |
 | `@hypit/fishaudio-speech` | `voice-clone` | `fishaudio/voice-clone` | `input`, `reference_audio`, constant `voice_description` title |
 | `@hypit/elevenlabs-speech` | `eleven_ttv_v3` | `eleven_ttv_v3` | `input`, `voice_description` |
+| `@hypit/noiz-audio` | `noiz-text-to-sound` | `noiz-text-to-sound` | `input`, optional `duration_seconds`, `response_format` (`POST /v1/audio/speech`) |
+| `@hypit/noiz-audio` | `noiz-yue2-music` | `noiz-yue2-music` | `prompt`, `lyrics` or `lyrics_prompt`, optional `abc`, `cot`, `title`, `tags`, `negative_tags`, `vocal_gender`, `lyric_timestamps` (`POST /v1/audio/music`) |
+| `@hypit/noiz-audio` | `noiz-yue2-cover` | `noiz-yue2-cover` | `reference_audio`, `lyrics`, `melody_adherence`, `music_description` or `style`, optional `title`, `vocal_gender`, `lyric_timestamps` (`POST /v1/audio/music`) |
 
 Each returned preview becomes one member of the audio set. These Model packages do not expose preset
 voices. When another selected Endpoint offers the same capability (such as local WhisperX or a project-owned speech

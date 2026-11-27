@@ -4,7 +4,7 @@ from package_paths import PACKAGE_ROOT
 import argparse, hashlib, json, math, os, re, shutil
 from pathlib import Path
 
-SKILL=PACKAGE_ROOT; ENTRY="scripts/render_wise_motion.mjs"; DEPENDENCY_ID="wise-motion"; VERSION="3.1.0"; PACKAGE_VERSION="0.1.21"; RUNTIME_DIR="wise-motion-0.1.21"; FPS=24
+SKILL=PACKAGE_ROOT; ENTRY="scripts/render_wise_motion.mjs"; DEPENDENCY_ID="wise-motion"; VERSION="3.1.0"; PACKAGE_VERSION="0.1.23"; RUNTIME_DIR="wise-motion-0.1.23"; FPS=24
 from adapter_kit import browser_candidates, sha256_file as sha, validate_source_binding, identity_from_bytes
 def validate_brief(payload):
  b=json.loads(payload); req={"schema_version","source_binding","template_request","composition","theme","title","context_labels","layers"}
@@ -44,7 +44,7 @@ def prepare_runtime(project_root):
  if not (runtime/"node_modules/wise-motion/dist/index.mjs").is_file():
   import subprocess; subprocess.run(["npm","ci","--ignore-scripts","--no-audit","--no-fund"],cwd=runtime,check=True,timeout=240)
  if not (runtime/"public/wise-motion/.wise-motion-assets.json").is_file():
-  import subprocess; subprocess.run(["node",str(runtime/"node_modules/wise-motion/scripts/install-assets.mjs"),str(runtime/"public/wise-motion")],cwd=runtime,check=True,timeout=120)
+  import subprocess; subprocess.run(["node",str(runtime/"node_modules/wise-motion/scripts/install-assets.mjs"),str(runtime/"public/wise-motion"),"--effect","orbit","--variant","original"],cwd=runtime,check=True,timeout=120)
  return check_runtime(project)
 def create_adapter(project_root,node_executable,brief_loader):
  from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter

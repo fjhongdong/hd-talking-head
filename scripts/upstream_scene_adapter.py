@@ -27,11 +27,11 @@ sys.path.insert(0, str(SKILL))
 from adapter_kit import sha256_file as sha
 ENTRY = "scripts/upstream_scene_adapter.py"
 VERSION = "2.0.0"
-ONETAKE_PACKAGES = {"playwright": "1.61.0", "numpy": "2.5.3", "Pillow": "12.3.0",
-                    "scipy": "1.18.1", "matplotlib": "3.11.2", "fonttools": "4.66.1", "brotli": "1.2.0"}
+ONETAKE_TEMPLATE_ID = "onetake-reviewed-scene"
+from onetake_runtime import PACKAGES as ONETAKE_PACKAGES
 SOURCES = {
-    "lemo-opuscar": ("bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00", "core/render/video.mjs"),
-    "onetake": ("415758128aa45cc54340df40d8109363447f582e", "scripts/render.py"),
+    "lemo-opuscar": ("439b98af08b04400f8fd8a8dd19cd773c0c96532", "core/render/video.mjs"),
+    "onetake": ("4e024be4c6c696b260f39a35aee6bd56d303b679", "scripts/render.py"),
 }
 
 def lemo_styles(project_root):
@@ -128,6 +128,9 @@ def relative(value):
 
 def parent_input_facts(brief):
     """Read original workflow inputs without freezing its creative treatment."""
+    if brief.get('dependency_id') == 'onetake':
+        return {**brief['creative_handoff'], 'source_binding': brief['source_binding'],
+                'files': brief['files']}
     handoff = brief.get('creative_handoff', {})
     return {**{key: handoff[key] for key in ('transcript', 'semantic_goal', 'subject',
             'forbidden_outcomes') if key in handoff}, 'source_binding': brief['source_binding'],
@@ -145,7 +148,7 @@ def validate_brief(payload):
             or type(b.get("template_request")) is not dict
             or type(b.get("composition")) is not dict
             or type(b.get("files")) is not list or
-            (b.get("dependency_id") == "onetake" and set(b) != base) or
+            (b.get("dependency_id") == "onetake" and set(b) != base | {"creative_handoff"}) or
             (b.get("dependency_id") == "lemo-opuscar" and set(b) != base | {"style_slug", "creative_handoff"})
             or b["schema_version"] != 1 or b["dependency_id"] not in SOURCES):
         raise ValueError("Invalid upstream scene brief")
@@ -194,6 +197,12 @@ def validate_brief(payload):
             or "index.html" not in {f["scene_path"] for f in files}
             or b["workflow_media_ref"] not in {f["media_ref"] for f in files}):
         raise ValueError("Scene entry and distinct workflow record are required")
+    if b["dependency_id"] == "onetake":
+        handoff = b["creative_handoff"]
+        if (not isinstance(handoff, dict)
+                or set(handoff) != {"transcript", "semantic_goal", "required_change"}
+                or any(not isinstance(value, str) or not value.strip() for value in handoff.values())):
+            raise ValueError("OneTake requires the approved transcript, semantic goal and visible change")
     if b["dependency_id"] == "lemo-opuscar":
         if "TREATMENT.md" not in {f["scene_path"] for f in files}:
             raise ValueError("Lemo requires its current TREATMENT.md among the frozen files")
@@ -234,10 +243,8 @@ def check_runtime(project_root, dependency_id):
     if dependency_id == "lemo-opuscar":
         verify_lemo_source(project)
     else:
-        head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-        dirty = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True)
-        if head != commit or dirty:
-            raise ValueError("Upstream source version changed; do not auto-update or reset it")
+        from onetake_runtime import verify_source
+        verify_source(project, commit)
     executables = {name: shutil.which(name) for name in ("node", "ffmpeg", "ffprobe")}
     if any(not value for value in executables.values()):
         raise ValueError("Install the required local Node and video runtime first")
@@ -249,18 +256,16 @@ def check_runtime(project_root, dependency_id):
         runtime["browser"] = str(Path(project_root).resolve() / ".remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell")
     else:
         # Preserve the venv executable path: resolving its symlink would discard the venv.
-        runtime["python"] = str(root / ".venv/bin/python")
-        probe = subprocess.check_output([runtime["python"], "-c",
-            "import json,sys,importlib.metadata as m; from playwright.sync_api import sync_playwright; "
-            "p=sync_playwright().start(); print(json.dumps({'browser':p.chromium.executable_path,"
-            "'python':list(sys.version_info[:2]),"
-            "'packages':{k:m.version(k) for k in ['playwright','numpy','Pillow','scipy','matplotlib','fonttools','brotli']}})); p.stop()"], text=True)
-        details = json.loads(probe)
+        runtime["python"] = str(project / "runtime/onetake-python312/bin/python")
+        runtime["browser_cache"] = str(project / "runtime/onetake-browsers")
+        from onetake_runtime import runtime_details
+        details = runtime_details(project)
         if details["python"] != [3, 12] or details["packages"] != ONETAKE_PACKAGES:
             raise ValueError("OneTake requires the approved Python 3.12 render package versions")
+        if details["browser"] is None:
+            raise ValueError("OneTake project-local render browser is missing")
         runtime["browser"] = details["browser"]
         runtime["packages_sha256"] = hashlib.sha256(json.dumps(details["packages"], sort_keys=True).encode()).hexdigest()
-        runtime["browser_cache"] = str(next(p.parent for p in Path(details["browser"]).parents if p.name.startswith("chromium-")))
     if not Path(runtime["browser"]).is_file():
         raise ValueError("The upstream render browser is missing")
     runtime["executable_hashes"] = {name: sha(runtime[name]) for name in ("node", "ffmpeg", "ffprobe", "browser")}
@@ -297,6 +302,10 @@ def create_adapter(project_root, dependency_id, python_executable, brief_loader)
                 or component["artifact_contract"] != {"width": 1080, "height": 1920, "fps": 24, "alpha": False}
                 or component["render_window"]["start_frame"] != 0 or component["render_window"]["end_frame"] != b["composition"]["frames"]):
             raise ValueError("Upstream scene no longer matches the approved source, request or recipe")
+        if dependency_id == "onetake":
+            if (component.get("template_id") != ONETAKE_TEMPLATE_ID
+                    or component["invocation_record"].get("creative_handoff") != b["creative_handoff"]):
+                raise ValueError("OneTake creative handoff differs from the approved semantic binding")
         if dependency_id == "lemo-opuscar" and component.get("template_id") != "lemo-opuscar/" + b["style_slug"]:
             raise ValueError("Lemo component template identity does not match the selected style")
         if dependency_id == "lemo-opuscar":
@@ -338,7 +347,7 @@ def create_binding(adapter, brief_bytes):
         raise ValueError("Upstream scene adapter identity mismatch")
     request = b["template_request"]
     template_id = ("lemo-opuscar/" + b["style_slug"] if adapter.dependency_id == "lemo-opuscar"
-                   else adapter.dependency_id + "-reviewed-scene")
+                   else ONETAKE_TEMPLATE_ID)
     binding = {"producer_type": "dependency", "dependency_id": adapter.dependency_id, "entrypoint": ENTRY,
         "producer_version": VERSION, "primary_renderer": "HTMLCanvas", "renderer_version": adapter.renderer_version,
         "template_origin": "custom_fallback", "template_id": template_id, "template_version": VERSION,
@@ -349,6 +358,8 @@ def create_binding(adapter, brief_bytes):
         "brief_sha256": hashlib.sha256(brief_bytes).hexdigest(),
         "invocation_record": {"argv": [str(adapter.launcher), ENTRY], "status": "planned", "exit_code": None,
             "template_request": request, "production_evidence": workflow_reference(b)}}
+    if adapter.dependency_id == "onetake":
+        binding["invocation_record"]["creative_handoff"] = dict(b["creative_handoff"])
     if adapter.dependency_id == "lemo-opuscar":
         if b["style_slug"] not in lemo_styles(SKILL):
             raise ValueError("Unknown Lemo style")
@@ -422,15 +433,16 @@ def run_native(b, scene, runtime, *, job_dir):
         if root != verify_lemo_source(SKILL):
             raise ValueError("Lemo source root differs from its packaged manifest")
     else:
-        if subprocess.check_output(["/usr/bin/git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != commit:
-            raise ValueError("Upstream source commit changed")
-        if subprocess.check_output(["/usr/bin/git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True):
-            raise ValueError("Upstream tracked source changed")
+        from onetake_runtime import verify_source
+        if root != verify_source(SKILL, commit):
+            raise ValueError("OneTake source root differs from its packaged manifest")
     if any(sha(runtime[k]) != v for k, v in runtime["executable_hashes"].items()):
         raise ValueError("Render executable changed")
     if dependency_id == "lemo-opuscar" and sha(root / "node_modules/playwright-core/package.json") != runtime["packages_sha256"]:
         raise ValueError("Upstream browser package changed")
     validate_workflow(b, scene, root)
+    from text_card_layout import install_card_css
+    install_card_css(scene, 'index.html')
     duration = b["composition"]["frames"] / 24
     env = dict(os.environ, PATH=":".join({str(Path(runtime[k]).parent) for k in ("node", "ffmpeg", "ffprobe")}) + ":/usr/bin:/bin")
     native = scene / "native.mp4"

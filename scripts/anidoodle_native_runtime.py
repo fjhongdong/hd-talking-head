@@ -11,10 +11,10 @@ import subprocess
 from adapter_kit import sha256_file
 from package_paths import PACKAGE_ROOT
 
-RENDERER_VERSION = 'anidoodle-0.10.1-9c20e77467be'
-EXPECTED_PACKAGES = {'esbuild': '0.25.12', 'playwright': '1.64.0', 'playwright-core': '1.64.0'}
+RENDERER_VERSION = 'anidoodle-0.10.1-4ae27d2c281f'
+EXPECTED_PACKAGES = {'esbuild': '0.28.2', 'playwright': '1.64.0', 'playwright-core': '1.64.0'}
 RUNTIME_PACKAGES = {
-    'esbuild': 'runtime/hyperframes-0.8.167/node_modules/esbuild',
+    'esbuild': 'runtime/hyperframes-0.9.100/node_modules/esbuild',
     'playwright': 'runtime/motion-native-playwright-1.64.0/node_modules/playwright',
     'playwright-core': 'runtime/motion-native-playwright-1.64.0/node_modules/playwright-core',
 }

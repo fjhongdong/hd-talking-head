@@ -1,6 +1,6 @@
 {
   "name": "@hypit/hypit",
-  "version": "0.3.1",
+  "version": "0.3.5",
   "homepage": "https://hypit.ai",
   "repository": {
     "type": "git",
@@ -242,6 +242,7 @@
   "devDependencies": {
     "@hypit/admission": "workspace:*",
     "@hypit/author": "workspace:*",
+    "@hypit/bach": "workspace:*",
     "@hypit/blob": "workspace:*",
     "@hypit/browser-capture": "workspace:*",
     "@hypit/result": "workspace:*",
@@ -270,6 +271,7 @@
     "@hypit/narrative": "workspace:*",
     "@hypit/narrative-caption": "workspace:*",
     "@hypit/narrative-temporal": "workspace:*",
+    "@hypit/noiz-audio": "workspace:*",
     "@hypit/pixverse": "workspace:*",
     "@hypit/project": "workspace:*",
     "@hypit/producer": "workspace:*",
@@ -283,6 +285,7 @@
     "@hypit/media-local": "workspace:*",
     "@hypit/provider-monid": "workspace:*",
     "@hypit/provider-pollo": "workspace:*",
+    "@hypit/provider-sume": "workspace:*",
     "@hypit/provider-tokendance": "workspace:*",
     "@hypit/provider-whisperx-local": "workspace:*",
     "@hypit/ranking": "workspace:*",
@@ -325,12 +328,13 @@
     "@hypit/visual-track": "workspace:*"
   },
   "dependencies": {
+    "@hypit/bach": "workspace:^0.1.1",
     "@hypit/browser-capture": "workspace:^0.2.0",
     "@hypit/speech-estimate": "workspace:^0.1.1",
-    "@hypit/media-local": "workspace:^0.2.0",
+    "@hypit/media-local": "workspace:^0.2.1",
     "@hypit/runtime-local": "workspace:^0.1.1",
-    "@hypit/video": "workspace:^0.2.0",
-    "@hypit/studio": "workspace:^0.2.0",
+    "@hypit/video": "workspace:^0.2.4",
+    "@hypit/studio": "workspace:^0.2.1",
     "@hypit/whisperx": "workspace:^0.2.0",
     "@hypit/yt-dlp": "workspace:^0.2.0",
     "@types/node": "24.10.1",

@@ -125,6 +125,7 @@ Use $punk-cover to create prompt-only output for this X cover, style 黑白灰�
 | Anthropic Research 风格 | `anthropic-research-style` | AI、研究、知识、系统和设计主题的极简编辑封面 |
 | kimi风格 | `kimi-stlye` | AI、研究、产品、材料和创意项目的俯视档案桌封面 |
 | 极简轻科技 | `minimal-light-tech` | 科技产品、工具教程、品牌概念和轻科技主题的纯白留白封面 |
+| 古典油画 · 极简视觉隐喻 | `classical-oil-minimal-metaphor` | 纯白背景、彩色古典油画剪裁、单一巧妙隐喻；无任何文字，默认请求比例 5:2 |
 | 极简视觉隐喻风 | `minimal-visual-metaphor` | AI、商业科技、产品、组织和系统变化的极简实体隐喻封面 |
 
 ### 风格样例
@@ -155,8 +156,10 @@ Use $punk-cover to create prompt-only output for this X cover, style 黑白灰�
 | 复古日本科幻动画 | 法式极简墨线海报 | 品牌协同连接 |
 | ![Anthropic Research 风格](./screenshots/punk-cover-styles/anthropic-research-style.png) | ![kimi风格](./screenshots/punk-cover-styles/kimi-stlye.png) | ![极简视觉隐喻风](./screenshots/punk-cover-styles/minimal-visual-metaphor.png) |
 | Anthropic Research 风格 | kimi风格 | 极简视觉隐喻风 |
-| ![极简轻科技](./screenshots/punk-cover-styles/minimal-light-tech.png) | | |
-| 极简轻科技 | | |
+| ![极简轻科技](./screenshots/punk-cover-styles/minimal-light-tech.png) | ![古典油画 · 极简视觉隐喻](./screenshots/punk-cover-styles/classical-oil-minimal-metaphor.png) | |
+| 极简轻科技 | 古典油画 · 极简视觉隐喻 | |
+
+古典油画示例为用户提供的风格参考图，不是生成验收样张；新图需重新构思人物与动作，并保证关键主体完整、四周留白。
 
 ## punk-ip-video-cover
 
@@ -278,3 +281,13 @@ Punk Skill `v2.0.0` 及后续版本采用双轨授权：
 
 - 提示词设计与风格方向：[@adrianpunk](https://github.com/adrianpunk) · [X](https://x.com/AdrianPunk115)
 - 仓库维护：[@jinchenma94](https://github.com/jinchenma94) · [X](https://x.com/jinchenma_ai)
+
+## 关于作者
+
+**Punk**
+
+AI视觉/AI小白教程<br>
+中科大硕士｜Punk Skills 作者｜3个月挣8位数<br>
+AfterNoise社群发起人
+
+[@AdrianPunk115](https://x.com/AdrianPunk115)

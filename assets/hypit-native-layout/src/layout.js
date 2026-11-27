@@ -1,9 +1,9 @@
 /**
  * Static portrait layout for the native chat VisualTrack.
- * The input track is treated as immutable: only the root HTML program gets
- * layout declarations; its HTML, CSS, data and frame setup remain untouched.
+ * Layout uses the native chat's real message text and scrolling animation.
  */
 import { sealVisualTrack } from "@hypit/composition";
+import { cardCss } from "./card-css.js";
 
 const style = (name, value) => ({ name, value });
 
@@ -26,7 +26,9 @@ export function staticLayout(track, options = {}) {
         style("transform", "scale(2)"),
         style("transform-origin", "top left"),
       ]) existing.set(declaration.name, declaration);
-      return { ...element, style: [...existing.values()] };
+      const payload = element.program.payload;
+      const program = { ...element.program, payload: {...payload, css: `${payload.css || ""}\n${cardCss}`} };
+      return { ...element, program, style: [...existing.values()] };
     }),
   }));
   return sealVisualTrack({ ...track, presents });

@@ -251,7 +251,7 @@ def _native_seconds_ceiling(tree):
     return limits[0]
 
 
-def _discover_native_candidates(project_root: Path, *, native_rows=None) -> list[dict]:
+def _discover_native_candidates(project_root: Path, *, native_rows=None, profiles=None) -> list[dict]:
     """Read actual bridge routes and qualified cards, not caller favorites."""
     project = Path(project_root).resolve(strict=True)
     skill = project
@@ -279,19 +279,24 @@ def _discover_native_candidates(project_root: Path, *, native_rows=None) -> list
         if not isinstance(dep, str) or not (skill / entry).is_file():
             raise ValueError(f"B-roll discovery entry is incomplete: {module}")
         if module == "upstream_scene_adapter":
-            styles = project / "vendor/lemo-opuscar/styles"
-            entries = sorted(p for p in styles.glob("*/style.json") if p.parent.name != "_template")
-            from scripts.upstream_scene_adapter import lemo_styles
-            if {p.parent.name for p in entries} != set(lemo_styles(project)):
-                raise ValueError("Lemo discovery requires the complete pinned official catalog")
-            for path in entries:
-                metadata = contract_artifacts.read_json_artifact(path)
-                slug = path.parent.name
-                if metadata.get("slug") != slug or not (path.parent / "STYLE.md").is_file():
-                    raise ValueError("Lemo style identity or native instructions are missing")
+            from scripts.upstream_scene_adapter import ONETAKE_TEMPLATE_ID, lemo_styles
+            official_styles = lemo_styles(project)
+            prefix = f"{dep}:{dep}/"
+            if profiles is None:
+                from .motion_capabilities import load_profiles
+                profiles = load_profiles(project, native_rows=native_rows)
+            slugs = {candidate_id.removeprefix(prefix) for candidate_id in profiles
+                     if candidate_id.startswith(prefix)}
+            if not slugs or not slugs <= official_styles.keys():
+                raise ValueError("A registered Lemo style is missing from the official source")
+            for slug in sorted(slugs):
                 add(dep, entry, dep + "/" + slug, version, route=dep + "/" + slug,
                     limitations=("Invoke the complete original Lemo Skill and selected STYLE; freeze its topic-specific project before native rendering",
                                  "Opaque B-roll only; verify actual materials, Chinese text and subject action for this content"))
+            add("onetake", entry, ONETAKE_TEMPLATE_ID, version,
+                limitations=("Use the complete OneTake Skill and its original motion.js to author a continuous portrait scene",
+                             "Use silent opaque B-roll with locally bound assets and the approved frame clock"))
+            found[-1]["max_duration_seconds"] = 60.0
         elif module == "hyperframes_native_adapter":
             routes = values.get("BROLL_ROUTES")
             if not isinstance(routes, (tuple, list)):
@@ -390,9 +395,11 @@ def _discover_native_candidates(project_root: Path, *, native_rows=None) -> list
 
 
 def discover_candidates(project_root: Path) -> list[dict]:
-    from .motion_capabilities import describe_candidates
+    from .motion_capabilities import describe_candidates, load_profiles
 
-    return describe_candidates(project_root, _discover_native_candidates(project_root), use="broll")
+    profiles = load_profiles(project_root)
+    candidates = _discover_native_candidates(project_root, profiles=profiles)
+    return describe_candidates(project_root, candidates, use="broll", profiles=profiles)
 
 def _text(value, label):
     if not isinstance(value, str) or not value.strip():
@@ -1235,8 +1242,78 @@ def _validate_partial_windows(selection, director):
             raise ValueError("fixed material window differs from the current director")
 
 
+def semantic_component_timing(treatment: Mapping | None, beat: Mapping) -> dict | None:
+    """Read the component's single semantic timing declaration, without a second schema."""
+    from .semantic_visual_plan import component_timing
+
+    if not isinstance(treatment, Mapping):
+        return None
+    key = (beat.get("segment_id"), beat.get("component_id"))
+    for rows in treatment.get("semantic_lists", {}).values():
+        for row in rows:
+            if row.get("row_id") == beat.get("semantic_row_id"):
+                return component_timing(row, key)
+    return None
+
+
+def _planned_timing_failure(row, beat, timing):
+    """Exclude only deadlines contradicted by an existing concrete native clock."""
+    if timing is None:
+        return None
+    start = round(beat["start"] * 24)
+    earliest = None
+    if row.get("adapter_module") == "huashu_stat_adapter":
+        target, _, _ = _stat_timing_bounds()
+        earliest = start + target
+    elif (row.get("candidate_id"), row.get("adapter_module")) == (
+            "overlay:grid-card-assemble", "hyperframes_native_adapter"):
+        from .overlay_alignment import _grid_tile_seconds
+        source = (PACKAGE_ROOT / "vendor/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
+        earliest = timing.get("action_start_frame", start) + _grid_tile_seconds(source, _duration(beat)) * 24
+    elif (row.get("candidate_id"), row.get("adapter_module")) == (
+            "overlay:pin-board", "overlay_studio_adapter"):
+        landing, exit_seconds = _pinboard_timing_bounds()
+        earliest = timing.get("action_start_frame", start) + landing * 24
+        if timing["visible_until_frame"] > beat["end"] * 24 - exit_seconds * 24 + 1e-8:
+            return (f"{beat['segment_id']}: PinBoard native exit precedes planned "
+                    f"visible_until_frame={timing['visible_until_frame']}")
+    if earliest is not None and timing["settled_frame"] + 1e-8 < earliest:
+        return (f"{beat['segment_id']}: {row['candidate_id']} cannot finish its native action "
+                f"by planned settled_frame={timing['settled_frame']}")
+    return None
+
+
+def _pinboard_timing_bounds():
+    source = (PACKAGE_ROOT / "scripts/overlay_studio_adapter.py").read_text()
+    bounds = re.findall(r'times\[-1\]\s*\+\s*([\d.]+)\s*\+\s*12\s*/\s*24\s*>\s*'
+                        r'card\["end"\]\s*-\s*card\["start"\]\s*-\s*([\d.]+)', source)
+    if len(bounds) != 1:
+        raise ValueError("Native PinBoard timing declaration changed")
+    return tuple(float(value) for value in bounds[0])
+
+
+def _native_planned_timing_failure(beat, timing, events, *, name, action_times, landing, visible_until):
+    """Compare already checked native inputs; movable cues require an input revision."""
+    if timing is None:
+        return None
+    earliest_start = timing.get("action_start_frame", round(beat["start"] * 24)) / 24
+    deadline = timing["settled_frame"] / 24
+    if max(action_times) + landing > deadline + 1e-8:
+        if all(e["basis"] == "current_clause" for e in events):
+            earliest = max(max(earliest_start, e["anchor_time"] - 1 / 24) for e in events)
+            if earliest + landing > deadline + 1e-8:
+                return (f"{beat['segment_id']}: {name} word anchors and native landing cannot "
+                        f"finish by planned settled_frame={timing['settled_frame']}")
+        raise ValueError(f"{name} native cues miss the planned settled frame; revise the native input or plan")
+    if min(action_times) < earliest_start - 1e-8:
+        raise ValueError(f"{name} native cues precede the planned action start; revise the native input or plan")
+    if visible_until + 1e-8 < timing["visible_until_frame"] / 24:
+        raise ValueError(f"{name} native exit precedes planned visibility; revise the native input or plan")
+    return None
+
+
 def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, director=None, treatment=None,
-                  approved_selection=None) -> dict:
+                  approved_selection=None, planning_timing=True) -> dict:
     """Solve a new assignment or validate exact choices from a verified complete-list approval."""
     from .motion_capabilities import overlay_candidates
 
@@ -1278,6 +1355,9 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
             if check_key not in feasibility_checks:
                 review = next(c for c in beat["candidates"] if c["candidate_id"] == cid)
                 reason = timing_failure(row, beat, strict=partial or confirmed_locks is not None)
+                timing = semantic_component_timing(treatment, beat) if planning_timing else None
+                if reason is None:
+                    reason = _planned_timing_failure(row, beat, timing)
                 if reason is None and row['skill_id'] == 'cinecode' and review['fit'] != 'unreviewed':
                     from scripts.cinecode_catalog import validate_material_plan
                     try:
@@ -1288,7 +1368,7 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
                         reason = f'{beat["segment_id"]}: {cid}: {error}'
                 if reason is None and "native_input_clock" in review:
                     reason = _native_input_clock_failure(row, beat, review,
-                        job_dir=job_dir, director=director, treatment=treatment)
+                        job_dir=job_dir, director=director, treatment=treatment, timing=timing)
                 feasibility_checks[check_key] = reason
             reason = feasibility_checks[check_key]
             if reason:
@@ -1319,7 +1399,7 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
             raise ValueError("B-roll timing assignment exhausted: " + "; ".join(reason for _, reason in failures))
 
 
-def _native_input_clock_failure(row, beat, review, *, job_dir, director, treatment):
+def _native_input_clock_failure(row, beat, review, *, job_dir, director, treatment, timing=None):
     """Recheck one candidate's real clock; never turn arbitrary input errors into exclusions."""
     from types import SimpleNamespace
     from . import overlay_alignment, pinboard_alignment
@@ -1346,7 +1426,8 @@ def _native_input_clock_failure(row, beat, review, *, job_dir, director, treatme
         raise ValueError("Native input clock window or component differs from the current director")
     semantic = [s for s in treatment.get("semantic_lists", {}).get("overlay", [])
                 if s.get("row_id") == beat.get("semantic_row_id") and
-                {"segment_id": beat["segment_id"], "component_id": beat["component_id"]} in s.get("components", [])]
+                any(all(ref.get(k) == beat[k] for k in ("segment_id", "component_id"))
+                    for ref in s.get("components", []))]
     if len(semantic) != 1:
         raise ValueError("Native input clock belongs to another semantic row")
     root = Path(job_dir).resolve(strict=True)
@@ -1382,7 +1463,11 @@ def _native_input_clock_failure(row, beat, review, *, job_dir, director, treatme
             except overlay_alignment.GridClockConflict:
                 return str(error)
             raise ValueError("Grid clock can fit earlier word anchors; revise the native input instead of excluding it")
-        return None
+        if timing is None:
+            return None
+        return _native_planned_timing_failure(beat, timing, events, name="Grid",
+            action_times=[beat["start"] + e[3] for e in actual],
+            landing=overlay_alignment._grid_tile_seconds(source, duration), visible_until=beat["end"])
     native = pinboard_alignment.execution_contract()
     conflict = None
     try:
@@ -1406,7 +1491,22 @@ def _native_input_clock_failure(row, beat, review, *, job_dir, director, treatme
         except native.ClockConflict:
             return conflict
         raise ValueError("PinBoard clock can fit earlier word anchors; revise the native input instead of excluding it")
+    if timing is not None:
+        landing, exit_seconds = _pinboard_timing_bounds()
+        return _native_planned_timing_failure(beat, timing, events, name="PinBoard",
+            action_times=[e["effective_time"] for e in events], landing=landing,
+            visible_until=beat["start"] + brief["doc"]["cards"][0]["end"] - exit_seconds)
     return None
+
+
+def _stat_timing_bounds():
+    source = (PACKAGE_ROOT / "scripts/huashu_stat_adapter.py").read_text()
+    target = re.findall(r'm\["target_frame"\]\s*<\s*(\d+)', source)
+    hold = re.findall(r'm\["hold_frames"\]\s*<\s*(\d+)', source)
+    tail = re.findall(r'm\["target_frame"\]\s*\+\s*m\["hold_frames"\]\s*>\s*c\["frames"\]\s*-\s*(\d+)', source)
+    if any(len(values) != 1 for values in (target, hold, tail)):
+        raise ValueError("Native stat timing declaration changed")
+    return tuple(int(values[0]) for values in (target, hold, tail))
 
 
 def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
@@ -1453,13 +1553,7 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
             raise ValueError("Native rollup frame-clock declaration changed")
         minimum = max(minimum or 0, int(frames[0]) / 24)
     elif module == "huashu_stat_adapter":
-        source = (scripts / "huashu_stat_adapter.py").read_text()
-        target = re.findall(r'm\["target_frame"\]\s*<\s*(\d+)', source)
-        hold = re.findall(r'm\["hold_frames"\]\s*<\s*(\d+)', source)
-        tail = re.findall(r'm\["target_frame"\]\s*\+\s*m\["hold_frames"\]\s*>\s*c\["frames"\]\s*-\s*(\d+)', source)
-        if any(len(values) != 1 for values in (target, hold, tail)):
-            raise ValueError("Native stat timing declaration changed")
-        minimum = max(minimum or 0, sum(int(values[0]) for values in (target, hold, tail)) / 24)
+        minimum = max(minimum or 0, sum(_stat_timing_bounds()) / 24)
     elif strict and module is None and row.get("role") != "design":
         raise ValueError("Native timing contract is missing its adapter")
     elif strict and module not in {None, "hyperframes_native_adapter", "motion_native_skill_adapter",
@@ -1534,8 +1628,11 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *
     selection = treatment.get("skill_selection")
     if not isinstance(selection, dict):
         raise ValueError("B-roll treatment is missing skill_selection")
+    # The production caller supplies frozen approved routes, so these are not
+    # timed or optimized again. Unapproved standalone checks still use planning.
     computed = assign_skills(project_root, selection, job_dir=job_dir, director=draft, treatment=treatment,
-                             approved_selection=approved_selection)
+                             approved_selection=approved_selection,
+                             planning_timing=phase == "planning" or approved_selection is None)
     if (computed["assignments"] != selection.get("assignments")
             or computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
         raise ValueError("B-roll assignment changed; run assign before building bindings")

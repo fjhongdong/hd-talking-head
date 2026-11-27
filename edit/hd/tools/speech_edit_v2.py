@@ -450,14 +450,24 @@ def _normalize_video_use_words(
                 and all(char.isspace() or char in ",，、" for char in text)
             )
 
-        left, right = index - 1, index + 1
+        left, zero_end = index - 1, index + 1
+        while zero_end < len(events):
+            item = events[zero_end]
+            if not (
+                type(item) is dict and item.get("type") == "word"
+                and type(item.get("text")) is str and item["text"].isalpha()
+                and type(item.get("start")) in (int, float)
+                and type(item.get("end")) in (int, float)
+                and item["start"] == item["end"]
+            ):
+                break
+            zero_end += 1
+        right = zero_end
         while left >= 0 and bridge(events[left]):
             left -= 1
         while right < len(events) and bridge(events[right]):
             right += 1
         if left < 0 or right >= len(events):
-            return None
-        if left == index - 1 and right == index + 1:
             return None
         before, zero, after = events[left], events[index], events[right]
         for item in (before, zero, after):
@@ -471,14 +481,24 @@ def _normalize_video_use_words(
                              if item["type"] != "audio_event")
         if not (
             before["speaker_id"] == zero["speaker_id"] == after["speaker_id"]
-            and 0 <= before["start"] < before["end"] < zero["start"] == zero["end"]
+            and 0 <= before["start"] < before["end"] <= zero["start"] == zero["end"]
             <= after["start"] < after["end"] <= duration + 0.2
+            and (before["end"] < zero["start"] or zero_end > index + 1)
             and after["start"] - before["start"] <= 2.0
             # Exact identity excludes chaining onto a previously merged group.
             and normalized[-1] == {"text": prior_text, "start": before["start"], "end": before["end"]}
         ):
             return None
-        for item in events[left + 1:index] + events[index + 1:right]:
+        last_zero_time = zero["start"]
+        for item in events[index + 1:zero_end]:
+            point = item["start"]
+            if not (
+                item.get("speaker_id") == zero["speaker_id"]
+                and last_zero_time <= point <= after["start"]
+            ):
+                return None
+            last_zero_time = point
+        for item in events[left + 1:index] + events[zero_end:right]:
             if item.get("speaker_id", zero["speaker_id"]) != zero["speaker_id"]:
                 return None
             if item["type"] == "spacing" and "start" not in item and "end" not in item:
@@ -532,14 +552,14 @@ def _normalize_video_use_words(
                 previous = normalized[-1]
                 if start < previous["end"]:
                     raise SpeechEditV2Error("video-use words overlap")
-                if not punctuation_only and start > previous["end"]:
-                    if short_bounded_group(index):
+                group = protected_group(index) if not punctuation_only else None
+                if not punctuation_only and (start > previous["end"] or group is not None):
+                    if start > previous["end"] and short_bounded_group(index):
                         following = events[index + 1]
                         previous["text"] += event["text"] + following["text"]
                         previous["end"] = following["end"]
                         consumed_next = True
                         continue
-                    group = protected_group(index)
                     if group is not None:
                         left, right = group
                         following = events[right]
@@ -596,6 +616,8 @@ def _transcribe_with_video_use(
     result_path: Path,
     invocation: dict[str, Any],
     duration: float,
+    *,
+    word_timing_review: dict[str, Any] | None = None,
 ) -> tuple[list[transcribe.Word], dict[str, Any]]:
     transcriber = _video_use_entrypoint(job, VIDEO_USE_TRANSCRIBER)
     if not isinstance(result_path, Path):
@@ -613,11 +635,65 @@ def _transcribe_with_video_use(
     ):
         raise SpeechEditV2Error("video-use invocation does not match this source")
     payload = contract_artifacts.read_json_artifact(result_path)
+    timing_review = None
+    if word_timing_review is not None:
+        review = word_timing_review
+        if type(review) is not dict or set(review) != {
+            "source_sha256", "result_sha256", "event_index", "text", "start", "end",
+        }:
+            raise SpeechEditV2Error("word timing review is invalid")
+        events = payload.get("words") if type(payload) is dict else None
+        index = review["event_index"]
+        if (
+            review["source_sha256"] != invocation["source_sha256"]
+            or review["result_sha256"] != invocation["result_sha256"]
+            or type(events) is not list or type(index) is not int
+            or not 0 <= index < len(events)
+        ):
+            raise SpeechEditV2Error("word timing review does not match this source")
+        event = events[index]
+        if (
+            type(event) is not dict or event.get("type") != "word"
+            or type(event.get("text")) is not str or not event["text"].strip()
+            or _punctuation_or_space(event["text"]) or review["text"] != event["text"]
+            or any(type(event.get(key)) not in (int, float)
+                   or not math.isfinite(event[key]) for key in ("start", "end"))
+            or event["start"] != event["end"]
+        ):
+            raise SpeechEditV2Error("word timing review requires the exact zero-duration word")
+        if (
+            any(type(review[key]) not in (int, float)
+                or not math.isfinite(review[key]) for key in ("start", "end"))
+            or not 0 <= review["start"] <= event["start"] <= review["end"] <= duration
+            or review["end"] <= review["start"]
+        ):
+            raise SpeechEditV2Error("word timing review interval is invalid")
+        for neighbor_index, neighbor in enumerate(events):
+            if (neighbor_index == index or type(neighbor) is not dict
+                    or neighbor.get("type") != "word"
+                    or any(type(neighbor.get(key)) not in (int, float)
+                           or not math.isfinite(neighbor[key]) for key in ("start", "end"))
+                    or neighbor["end"] <= neighbor["start"]):
+                continue
+            if (neighbor_index < index and neighbor["end"] > review["start"]
+                    or neighbor_index > index and neighbor["start"] < review["end"]):
+                raise SpeechEditV2Error("word timing review overlaps a timed word")
+        timing_review = {
+            **copy.deepcopy(review),
+            "source": "local_pcm_review",
+            "raw_event": copy.deepcopy(event),
+            "raw_scribe_unchanged": True,
+        }
+        payload = copy.deepcopy(payload)
+        payload["words"][index].update(start=review["start"], end=review["end"])
     protected_groups: list[dict[str, Any]] = []
     words, merged = _normalize_video_use_words(payload, duration, protected_groups=protected_groups)
-    return words, {"engine": "video-use/elevenlabs-scribe", "invocation": invocation,
-                   "merged_zero_duration_events": merged,
-                   "protected_zero_duration_groups": protected_groups}
+    runtime = {"engine": "video-use/elevenlabs-scribe", "invocation": invocation,
+               "merged_zero_duration_events": merged,
+               "protected_zero_duration_groups": protected_groups}
+    if timing_review is not None:
+        runtime["word_timing_review"] = timing_review
+    return words, runtime
 
 
 def prepare_transcription(
@@ -625,13 +701,16 @@ def prepare_transcription(
     *,
     video_use_result: Path,
     invocation: dict[str, Any],
+    word_timing_review: dict[str, Any] | None = None,
 ) -> Path:
     state.require_runnable(job, "speech_cleanup")
     video = _input(job, "video")
     script = _input(job, "script").read_text(encoding="utf-8")
     inspection = _inspect(job)
     duration = float(inspection["audio"]["duration"])
-    words, runtime = _transcribe_with_video_use(job, video_use_result, invocation, duration)
+    words, runtime = _transcribe_with_video_use(
+        job, video_use_result, invocation, duration, word_timing_review=word_timing_review,
+    )
     target = job.job_dir / "05-speech-cleanup"
     stage = job.job_dir / f".05-speech-cleanup.stage-{secrets.token_hex(16)}"
     stage.mkdir()
@@ -640,7 +719,12 @@ def prepare_transcription(
         raw = stage / "scribe.json"
         transcribe.extract_pcm16k(video, wav)
         rate, samples = _pacing_audio(wav)
-        words, edge_adjustments = _derive_pcm_edge_trimmed_words(words, rate, samples)
+        words, edge_adjustments = _derive_pcm_edge_trimmed_words(
+            words, rate, samples,
+            protected_word_indices=frozenset(
+                group["word_index"] for group in runtime["protected_zero_duration_groups"]
+            ),
+        )
         runtime = {
             **runtime,
             "word_edge_silence_adjustments": edge_adjustments,
@@ -885,6 +969,7 @@ def _quiet_ranges(
 
 def _derive_pcm_edge_trimmed_words(
     words: list[transcribe.Word], rate: int, samples: array,
+    *, protected_word_indices: frozenset[int] = frozenset(),
 ) -> tuple[list[transcribe.Word], list[dict[str, Any]]]:
     """Derive conservative word bounds from PCM without changing Scribe."""
     threshold = 0.8
@@ -893,6 +978,9 @@ def _derive_pcm_edge_trimmed_words(
     derived: list[transcribe.Word] = []
     adjustments: list[dict[str, Any]] = []
     for index, word in enumerate(words):
+        if index in protected_word_indices:
+            derived.append(word)
+            continue
         original_start, original_end = float(word.start), float(word.end)
         quiet = _quiet_ranges(rate, samples, original_start, original_end, average_limit=average_limit)
         # A fully quiet word has no safe speech boundary. Keep it intact.
@@ -1482,6 +1570,7 @@ def _render_with_video_use(
                 str(rendered),
                 "--no-subtitles",
                 "--no-loudnorm",
+                "--fps", "24",
             ],
             check=True,
             capture_output=True,

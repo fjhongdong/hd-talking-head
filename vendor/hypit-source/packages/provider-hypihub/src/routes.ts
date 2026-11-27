@@ -12,7 +12,7 @@ import type { BlobRef, CapabilityRef, CanonicalValue, StoredValue, TypeRef } fro
 import type { EndpointRequest, EndpointSupport } from "@hypit/hypit/endpoint";
 import { hypiHubMappings } from "./mapping.js";
 
-export type HypiHubModelOperation = "images" | "image_edits" | "videos" | "audio_speech" | "transcriptions";
+export type HypiHubModelOperation = "images" | "image_edits" | "videos" | "audio_speech" | "audio_music" | "transcriptions";
 
 /** Request identity is available before resolving any reference into a service URL. */
 export type HypiHubPreparedRequest = {
@@ -25,6 +25,7 @@ export type HypiHubRoute = (typeof hypiHubMappings)[number] & {
   readonly key: string;
   readonly returns: TypeRef;
   readonly media: "image" | "video" | "audio";
+  readonly lifecycle: "immediate" | "asynchronous";
   readonly supports?: (request: EndpointRequest) => EndpointSupport;
   readonly prepare: (constraints: CanonicalValue) => HypiHubPreparedRequest;
   readonly packageResult: (artifacts: readonly BlobRef[]) => StoredValue;
@@ -35,8 +36,21 @@ function scalar(request: GenerationRequest, port: string): string | number | boo
   return typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : undefined;
 }
 
-/** Current HypiHub GPT Image combinations, independently declared at this Endpoint boundary. */
-function hypiHubGenerationRejection(mapping: GenerationWireMapping, request: GenerationRequest): string | undefined {
+/** Service-specific request limits, checked before resolving reference URLs. */
+function hypiHubGenerationRejection(
+  mapping: GenerationWireMapping,
+  request: GenerationRequest,
+  pendingPorts: readonly string[] = [],
+): string | undefined {
+  if (mapping.capability.module.name === "@hypit/bach") {
+    const resolution = scalar(request, "resolution");
+    if (resolution !== undefined && resolution !== "1080p") {
+      return "HypiHub Bach requires resolution 1080p";
+    }
+    try { selectWireModelForRequest(mapping, request, pendingPorts); }
+    catch (error) { return error instanceof Error ? error.message : String(error); }
+    return undefined;
+  }
   if (mapping.capability.module.name !== "@hypit/gpt-image" || mapping.capability.name !== "gpt-image-2") {
     return undefined;
   }
@@ -55,18 +69,28 @@ function hypiHubGenerationRejection(mapping: GenerationWireMapping, request: Gen
   return undefined;
 }
 
+function isAsyncAudioMapping(mapping: GenerationWireMapping): boolean {
+  return mapping.result === "audio"
+    && mapping.capability.module.name === "@hypit/noiz-audio"
+    && (mapping.capability.name === "noiz-yue2-music" || mapping.capability.name === "noiz-yue2-cover");
+}
+
 export const hypiHubRoutes: readonly HypiHubRoute[] = hypiHubMappings.map((mapping) => {
-  const hasRequestLimits = mapping.capability.module.name === "@hypit/gpt-image"
-    && mapping.capability.name === "gpt-image-2";
+  const hasRequestLimits = mapping.capability.module.name === "@hypit/bach"
+    || (mapping.capability.module.name === "@hypit/gpt-image"
+      && mapping.capability.name === "gpt-image-2");
+  const asyncAudio = isAsyncAudioMapping(mapping);
   return {
     ...mapping,
     key: capabilityKey(mapping.capability),
     returns: mapping.result === "image" ? generationTypes.imageSet
       : mapping.result === "video" ? generationTypes.videoSet : generationTypes.audioSet,
     media: mapping.result,
+    lifecycle: mapping.result === "audio" && !asyncAudio ? "immediate" : "asynchronous",
     ...(hasRequestLimits ? {
       supports: (request: EndpointRequest) => {
-        const reason = hypiHubGenerationRejection(mapping, request.constraints as unknown as GenerationRequest);
+        const reason = hypiHubGenerationRejection(mapping, request.constraints as unknown as GenerationRequest,
+          request.pendingInputs?.map((input) => input.input));
         return reason === undefined ? { status: "supported" } : { status: "unsupported", reason };
       },
     } : {}),
@@ -79,7 +103,9 @@ export const hypiHubRoutes: readonly HypiHubRoute[] = hypiHubMappings.map((mappi
       const hasReferences = Object.entries(mapping.fields).some(([port, field]) =>
         (field.as === "url" || field.as === "urlArray" || field.as === "itemObject")
           && (request.ports[port]?.length ?? 0) > 0);
-      const operation = mapping.result === "audio" ? "audio_speech" : mapping.result === "video" ? "videos"
+      const operation: HypiHubModelOperation = mapping.result === "audio"
+        ? (asyncAudio ? "audio_music" : "audio_speech")
+        : mapping.result === "video" ? "videos"
         : hasReferences ? "image_edits" : "images";
       return {
         model,
@@ -132,15 +158,24 @@ function normalizeHypiHubRequest(
   delete input.last_frame;
   if (typeof firstFrame === "string" && firstFrame.length > 0) input.first_frame = firstFrame;
   if (typeof lastFrame === "string" && lastFrame.length > 0) input.last_frame = lastFrame;
-  if (Array.isArray(imageRefs) && imageRefs.length > 0) input.reference_image_urls = imageRefs;
+  if (Array.isArray(imageRefs) && imageRefs.length > 0) input.reference_image_urls = referenceItems(imageRefs);
   if (Array.isArray(genericImageRefs) && genericImageRefs.length > 0) {
     const urls = genericImageRefs.map((item) => item !== null && typeof item === "object"
       ? (item as Record<string, unknown>).url : item).filter((item): item is string => typeof item === "string" && item.length > 0);
     if (urls.length > 0) input.reference_image_urls = urls;
   }
-  if (Array.isArray(videoRefs) && videoRefs.length > 0) input.reference_videos = videoRefs;
-  if (Array.isArray(audioRefs) && audioRefs.length > 0) input.reference_audios = audioRefs;
+  if (Array.isArray(videoRefs) && videoRefs.length > 0) input.reference_videos = referenceItems(videoRefs);
+  if (Array.isArray(audioRefs) && audioRefs.length > 0) input.reference_audios = referenceItems(audioRefs);
   return { model: request.model, input: canonicalize(input) };
+}
+
+/** A reference with an offset is sent as `{ url, start_time }`; one with only a URL is sent as that URL. */
+function referenceItems(items: readonly unknown[]): readonly unknown[] {
+  return items.map((item) => {
+    if (item === null || typeof item !== "object") return item;
+    const object = item as Record<string, unknown>;
+    return Object.keys(object).length === 1 && typeof object.url === "string" ? object.url : object;
+  });
 }
 
 function capabilityKey(capability: { module: { name: string; version: string }; name: string }): string {

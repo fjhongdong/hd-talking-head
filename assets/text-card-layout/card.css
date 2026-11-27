@@ -1,0 +1,14 @@
+.hd-text-card {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  block-size: auto !important;
+}
+
+.hd-text-card-content {
+  min-inline-size: 0;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  text-overflow: clip;
+}

@@ -87,9 +87,11 @@ def render_web(project, native_project, composition):
         raise ValueError('Sweety web config must use its selected original fixed recipe')
     sys.path.insert(0, str(source / 'scripts'))
     import web_motion
-    result = web_motion.render(config['recipe'], config['params'], composition['width'], composition['height'],
-                               composition['frames'] / composition['fps'], directory / 'out/frames',
-                               fps=composition['fps'])
+    from sweety_card_layout import sizing_assets
+    with sizing_assets(web_motion, config['recipe'], Path(project) / 'assets/text-card-layout'):
+        result = web_motion.render(config['recipe'], config['params'], composition['width'], composition['height'],
+                                   composition['frames'] / composition['fps'], directory / 'out/frames',
+                                   fps=composition['fps'])
     # The upstream includes a settled endpoint frame; ordinary encoding consumes
     # exactly the parent's approved number of frames, without changing timing.
     (directory / 'out/web-motion-result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')

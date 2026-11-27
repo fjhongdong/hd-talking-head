@@ -1,6 +1,6 @@
 # MG Styles 15 原生接入
 
-渠道 `mg-styles-15` 完整保存上游仓库，固定提交 `49052d80bfaf9fa8412cc9710530e5e95a3b8d8c`。15 个风格是 15 个原生模板，不把原片或素材算模板。源码根在 `vendor/mg-styles-15`；`mg-styles-15-native-source.json` 校验完整文件树，`mg-styles-15-template-catalog.json` 记录原生提示词、参考工程和渲染器。
+渠道 `mg-styles-15` 完整保存上游仓库，固定提交 `3164c24e188899fd79b155124cfa7eefc7a906e9`。15 个风格是 15 个原生模板，不把原片或素材算模板。源码根在 `vendor/mg-styles-15`；`mg-styles-15-native-source.json` 校验完整文件树，`mg-styles-15-template-catalog.json` 记录原生提示词、参考工程和渲染器。
 
 上游没有 SKILL.md。完整入口是 README → 所选 prompts/*.md → 对应 demos/<style> → rubric.md；按原生 treatment、cue sheet、关键帧、动效、渲染和自评执行。父级只传已批准语义、原话、素材、授权及规格，不把原片的故事或父级编舞当作本期方案。替换 Creative seed 和输出尺寸/时钟，保留 Signature features。原生 Blender 风格仍完整执行 Blender 制作，不将其降为普通网页模板；缺少 Blender 时明确停止该模板。
 

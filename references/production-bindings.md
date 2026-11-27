@@ -127,7 +127,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" 
 以下原生仓库已随包提供；实际产物仍须符合本 Skill 的 9:16、内容与费用授权、真实来源和原生技术 QA 合同：
 
 - `vendor/html-video`
-- `vendor/video-use-runtime`
+- `vendor/video-use`
 - `vendor/hyperframes`
 
 `vendor/` 中其余来源以当前能力索引和依赖清单为准；未随包提供的历史参考仓库不作为当前可调用入口。

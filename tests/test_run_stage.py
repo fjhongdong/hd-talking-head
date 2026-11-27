@@ -415,7 +415,20 @@ class ExecuteStageTests(unittest.TestCase):
         with mock.patch.object(run_stage, "run_speech_cleanup", return_value={"speech_cleanup": "ready"}) as speech, \
              mock.patch("edit.hd.tools.speech_edit_v2.render_edit") as render:
             result = self.invoke(job, "speech_cleanup", video_use_result=Path("r.json"), invocation_path=Path("i.json"), cleanup_plan=Path("p.json"))
-        speech.assert_called_once_with(self.root, PROJECT, Path("r.json"), Path("i.json"), Path("p.json")); render.assert_not_called(); self.assertEqual(result["speech_cleanup"], "ready")
+        speech.assert_called_once_with(self.root, PROJECT, Path("r.json"), Path("i.json"), Path("p.json"),
+                                       word_timing_review=None)
+        render.assert_not_called()
+        self.assertEqual(result["speech_cleanup"], "ready")
+
+    def test_speech_passes_the_local_word_timing_review(self):
+        job = self.fake(current="speech_cleanup")
+        review = {"event_index": 218, "text": "好", "start": 67.162, "end": 67.423}
+        payload = {"stages": {"speech_cleanup": {"word_timing_review": review}}}
+        with mock.patch.object(run_stage, "run_speech_cleanup", return_value={"status": "pending"}) as speech:
+            self.invoke(job, "speech_cleanup", video_use_result=Path("r.json"), invocation_path=Path("i.json"),
+                        payload=payload)
+        speech.assert_called_once_with(self.root, PROJECT, Path("r.json"), Path("i.json"), None,
+                                       word_timing_review=review)
 
     def test_visual_revision_routes_realization_and_keeps_authorization_gate(self):
         from edit.hd.tools import visual_confirmation as confirmation

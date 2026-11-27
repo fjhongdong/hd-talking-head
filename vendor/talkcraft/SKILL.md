@@ -88,7 +88,21 @@ python3 scripts/tts_fishaudio.py script.json audio/full.wav audio/timestamps.jso
 - make_timing.py：转成 timing.json（chars 与文本逐字符 1:1，标点零时长），供 `tSay/msSay` 锚点查询
 - 配音自查（耳听）：无爆音/截断/误读；句间留 ~0.3s 气口，时间锚点更稳
 
+### ②-1 语义标注（2026-09-22 起必做，正主 `references/semantic-annotation.md`）
+口播稿逐句标「这句在做什么」，落成工程根 `semantics.json`——**这是选卡的需求侧产物**，没有它，选卡只剩输入类型一道过滤、剩下几十张卡靠印象挑（2026-09-21 那支片的「我是万里」就这样拿到了全库能量最低的文字卡，库里 P0 的人名条没人查到）。
+```bash
+python3 <skill根>/scripts/semantic_annotate.py --init     # 从 timestamps.json 出骨架（带词法提示 hint）
+#   逐句填 sem（26 词封闭词表，见 taxonomy.md「语义索引」）/ weight（main 主句 = 允许进新元素、sub 陪衬句）/ entities / need
+python3 <skill根>/scripts/semantic_annotate.py --stats    # 校验：与时间戳逐字一致 · 词表封闭 · 词法硬规（我是X→自我介绍、点赞订阅→号召、数量词→数据）· 每镜至少一个 main
+```
+标注是**派生物**：预剪 → 时间戳 → 标注 → 其后一切；改稿或重剪后 `text` 对不上就是标注失效，重新 `--init`。
+**②-1 早于分镜，所以 `shot` 字段此时是空的**（SHOTBOOK 还没写）：④ 写完后必须回填一次，否则下游的镜头级覆盖核不到任何东西——
+```bash
+python3 <skill根>/scripts/semantic_annotate.py --sync-shots   # ④ 之后：按 SHOTBOOK 标题的起止秒（或 shots.json）回填 shot，只动 shot，标注不丢
+```
+
 ## ③ 素材
+- **素材清单从 ②-1 的语义标注生成，不靠拍脑袋**：`need` 是 `证据` 的句去截真页 / 找出处，`身份` 要头像与账号信息，`量化` 要图表或数据源，`entities` 里的人名 / 品牌 / 地点 / URL 就是检索词。
 - **先给每个镜头标素材模式（多选，可组合）**：`B-roll`（实拍视频）/ `图片`（照片 / 海报 / 插图）/ `截图`（网页 / 界面证据画面）/
   `纯动效`——如"B-roll 打底 + 截图证据卡"。新闻/信息类话题证据优先：Playwright 实时截图比泛用 B-roll 更有信息量。
   四档对应 taxonomy.md 输入类型代号 **V / 图 / 截图 / 文**，SHOTBOOK 每镜写一行 `素材：V（路径）· 图（路径）· 文`（格式见 ④）
@@ -169,10 +183,23 @@ V / 图 / 截图 必须括号给路径，写"待采"= FAIL；纯动效镜也要�
 **排版规范**（全表 `references/layout.md`）：预算管"放多少"，规范管"放哪、多大、怎么对齐"——
 SHOTBOOK 每镜写**版式行**（栏跨度 + 组包围盒 + 对齐基准 + 字阶），定妆帧开 `debugOverlay` 核九项，任一失败 = P1；
 独句 hero 居中但不得覆盖人脸（含 B-roll 里的人脸，纵向改取人脸之外的三分线）。
+**版式轮换**（2026-09-21 用户：成片"人物在左下角、素材在中间方块、右边放文字，过于固定"；全表 cinematography.md §4.5 第 9 条）：写逐镜矩阵**之前**先在 G0 写「版式节奏表」
+（`| 镜 | 人物形态·方位 | 素材容器 | 主卡 |`，格式 cinematography.md §4）——同一张呈现卡（素材呈现 / 数据 / 运镜类）不连用 3 镜、全片 ≤1/3（≥6 镜的片）；人物形态（半身 / 角标左下 / 角标右下 / 分屏格内 / 抠人贴角 / 短暂离场）
+与素材容器（出血全屏 / 装框 / 分屏格 / 底床 / 多图编排 / 3D 墙 / 长页）连续 3 镜至少换其一；同一条 B-roll 不进相邻两镜。单条 B-roll 按 shot-design.md §2⑦ 七式选、相邻镜不同式，
+多素材按 §2④′ 关系表；preflight 按节奏表 + 蒙皮行核（连用 / 占比 FAIL）。轮换是换构图不是加运动——每式内部仍只有相机极缓推拉。
+**每镜必写「选卡行」**（②-1 的语义 → 卡；候选由机器给）：
+```bash
+python3 <skill根>/scripts/card_match.py --out qa/card-candidates.md   # 语义 × 素材行 × 卡索引 → 每镜每个主句语义的可行候选 + 排序理由 + 落选理由
+```
+跑之前先 `semantic_annotate.py --sync-shots` 回填 shot（②-1 时还没有分镜）。候选表除按语义列候选，还会给声明了素材的镜单列一行
+**素材承接候选**——声明了 V / 图 / 截图 却没有呈现 / 运镜类卡承接 = 素材裸贴，preflight 判 FAIL。
+SHOTBOOK 每镜写 `- 选卡行：<语义> → <卡>、<语义> → <卡>`（选卡行里的卡要真的落进蒙皮行，preflight 对账）；
+**选候选之外的卡**要在该镜写一行 `- 语义偏离：自我介绍 ← 开场已报身份，s11 不再重复`（理由 ≥4 字，preflight 认这行放行）。
+层矩阵的节拍行加一列**语义**（值取自 semantics.json，不另造词），这样「这一拍在做什么」在分镜里就是机器可读的。
 **选卡必读卡经验**：每张选中的卡，把 `references/cards/<slug>.md` 的「已知坑」与「落位自检」**逐条抄进该镜层矩阵的自检列**，
 实现后按条核（例：取景框 / 圈注 / 下划线类卡必核标注是否套住目标；`gooey-morph` 只用于图不用于字且无人物时居中；`chapter-title-card` **每章一套主题色 + 一个与本章内容相关的线稿 motif**，SHOTBOOK 写章节主题行——四张同色同纹样的章节卡是"又来了"不是"翻页"）——
 卡经验不进 SHOTBOOK 就等于没读。
-动效词汇从 **108 张配方卡** 里选：**先按这一镜的输入过滤**（口播人物 / B-roll 视频 / 图片 / 纯文字——`references/taxonomy.md`「输入类型索引」；新卡 md 开头有「输入类型」表 + 「常用场景」四条），再 `references/taxonomy.md` 分类索引 → `references/cards/<slug>.md` 参数与坑 → `template/cards/<slug>.tsx` **自包含 Remotion 源码（实现以它为准，复制进工程改 CONFIG 即用）**；`demos/<slug>/index.html` 是同画面的 HTML 预览（`open gallery/index.html` 一屏浏览、demo 滚入即自动播放；带★实战卡的生产母本另在 template/motion-systems|components）。
+动效词汇从 **108 张配方卡** 里选，两道过滤都查 `references/taxonomy.md` 的机器生成索引（源头是各卡 frontmatter 的「输入 / 语义 / 素材形态 / 位置 / props」五个字段，`scripts/cards_index.py --write` 生成、`--check` 校验，手改索引无效）：**先按这一镜的输入过滤**（人 / V / 图 / 截图 / 文 / 界 / 场——「输入类型索引」），**再按这句口播的语义过滤**（自我介绍 / 数据 / 对比 / 列举 / 引用 / 号召……26 词封闭词表——「语义索引」，一张卡只列在它专为之而设的语义下）；索引里带 ◦ 的卡**没有可换内容的 prop**（只暴露资源 / 皮肤类，或什么都不暴露），改文案 / 数据要动 tsx（各卡复用指引的 props 行写了改哪里）。◉◎ 两批新卡（29 张）md 开头另有「输入类型」表 + 「常用场景」四条。然后 `references/taxonomy.md` 分类索引 → `references/cards/<slug>.md` 参数与坑 → `template/cards/<slug>.tsx` **自包含 Remotion 源码（实现以它为准，复制进工程改 CONFIG 即用）**；`demos/<slug>/index.html` 是同画面的 HTML 预览（`open gallery/index.html` 一屏浏览、demo 滚入即自动播放；带★实战卡的生产母本另在 template/motion-systems|components）。
 **保真铁律**：每张用到的卡在工程里必须真实存在 `src/cards/<slug>.tsx`
 （自 template 复制改 CONFIG）——只读 md 就凭卡名手写"神似"简化版是最大翻车源
 （回弹/拍击/密度全丢、取景框括号方向画反、名片变色块），机器闸用 `scripts/card_lint.py`
@@ -194,8 +221,9 @@ demo 库的 0.65 上限是试听口径不是成片口径）。实现时按 ⑤ �
 
 **④→⑤ 闸：SHOTBOOK 写完先过 preflight 全量，再进实现**（③ 的素材体检 + SHOTBOOK 对账，任一 FAIL 挡住 ⑤）：
 ```bash
-python3 scripts/preflight.py --shotbook SHOTBOOK.md --host remotion/public/dh/host.webm --fps 30 --voice audio/full.wav --shots remotion/shots.json
+python3 scripts/preflight.py --shotbook SHOTBOOK.md --host remotion/public/dh/host.webm --fps 30 --voice audio/full.wav --shots remotion/shots.json --semantics semantics.json
 # SHOTBOOK 对账：每镜有「素材：」行 · V/图/截图 的文件都在盘上 · 零 V/图 镜头 FAIL · 占比 <1/3 WARN · 「未完成 / 未采集清单」节在册 · shots.json 与镜头 id 一致
+#           · 版式轮换：同卡连用 ≥3 镜 / 呈现卡 >1/3 / 节奏表连续 3 镜同形态同容器 FAIL；版式行复制 / 素材相邻复用 / 缺节奏表 WARN
 ```
 
 ## ⑤ 实现（Remotion）
@@ -222,7 +250,9 @@ anime.js v4 / three.js 走 `anime-remotion.ts` / `three-anime.ts` 桥（seek-saf
 不再"整片做完再看第一镜"：全片共性（蒙皮 / 字幕样式 / 相机幅度 / 卡的密度 / 音效电平）在一镜上就判得出，做完 13 镜再改是 13 倍返工；
 "改一行就整渲"的冲动也集中在这一段（2026-09-08 issue #24：9 次整片直渲全发生在制作完、验收前）。
 1. **先搭全合成骨架**：`remotion/` 目录建好后先 `bash <skill根>/runtime/link-runtime.sh <本片工程>`（`node_modules` 软链到统一依赖、`package.json` 依赖版本抄 runtime——不自建、不 `npm install`），
-   然后 entry / 全片时长 / `shots.ts` + `shots.json` 全表（时间来自 SHOTBOOK 与 timestamps，此时就写全）/ 全局系统（G1 相机、G3 让位、幕底、字幕、theme）；
+   然后 entry / 全片时长 / `shots.ts` + `shots.json` 全表（时间来自 SHOTBOOK 与 timestamps，此时就写全）/ 全局系统（G1 相机、G3 让位、幕底、字幕、theme）
+   / `src/sfx.ts` **先建成空表**（`export const CUES: SfxCue[] = []`）——⑤-2 拆解契约的六个文件（shots / scenes/index / Subtitles / sfx / timing / camera）骨架期就要齐，
+   工作台一接入就是多轨、之后每落一条 cue 轨上就多一块；缺 sfx.ts 进不了多轨、工作台右下角会点名缺哪个契约模块（`@kbsrc/*` 真实 / stub 的别名在 dev server 启动时定，后补文件要重跑 link-project.sh 并重启）；
    **其余镜头一律占位**——`MainVideo-example.tsx` 里 `SCENES[shot.id]` 查不到就落到 `PlaceholderScene`（只露幕底 + 字幕，不写任何动效）。
    骨架搭全是为了 render_shots 的段表 / 时长断言原样生效，不为首镜开豁免。
 2. **只实现样板镜**（SHOTBOOK G0「样板镜」行，默认 s01）：按 SHOTBOOK 全量落地——蒙皮行、卡 tsx 复制、音效 cue、转场处置——不做"先糙后精"。
@@ -247,13 +277,17 @@ open out/preview/s01.mp4        # 打开给用户看
 ### ⑤-2 工作台实时看板（骨架搭完就开，制作全程常开）
 把 ⑧ 里"交付后才打开工作台"前移到这里：**⑤-1 合成骨架搭完（shots.json + Main.tsx 落盘）就接入并打开工作台**，用户此后随时能看到
 "做到哪了、哪镜什么状态"、能播当前实时成片、能点单镜有声预览；agent 每存一次盘预览就刷新，不用等成片（`workbench/docs/live-pipeline.md`）。
+**打开即多轨**（2026-09-21 用户定版：制作中的看板与交付面是**同一个多轨工作台**，不是单轨"进度台"）——骨架一搭完，时间线上就是
+字幕 / 转场标记 / 全部镜头（占位镜画斜纹）/ 幕底 / 配音 / 逐条音效各轨；agent 每落一条 cue、每实现一镜、每改一句字幕，对应轨上 ≤3s 出现
+（shots / 场景 / sfx.ts / 字幕一落盘就按稳定 id 自动同步，用户改过的不覆盖）；进度轨 + 每个镜头 clip 的角标显示 占位 / 已实现 / 已渲 / 已过闸。
 ```bash
 bash <skill根>/runtime/check-runtime.sh                                # 依赖统一在 runtime/，这一步顺手把 workbench/node_modules 链好（不在 workbench 里 npm install）
 cd <skill根>/workbench
-bash scripts/link-project.sh <本片工程>       # kbsrc → remotion/src；public/ 先清掉指向别的工程的旧链接再逐项软链；末行打印拆解契约判定
-npm run dev &                                                          # 已在跑就跳过；链接变了要重跑一次 npm run gen
+bash scripts/link-project.sh <本片工程>       # kbsrc → remotion/src；public/ 先清掉指向别的工程的旧链接再逐项软链；末行必须打印「拆解契约 OK」——否则多轨进不去，它会说缺哪个文件
+npm run dev &                                                          # 已在跑就跳过；链接变了要重跑一次 npm run gen；契约文件是后补的要重启 dev server（别名启动时定）
 sleep 4 && curl -s http://localhost:5199 | grep -q '动效工作台' && echo "工作台 OK" || echo "FAIL: 工作台未起"
-open 'http://localhost:5199/?live'                                     # ?live = 直接装上本片主合成 + 进度轨；?tracks = 直接拆成多轨（字幕 / 镜头 / 音效…可改）
+open 'http://localhost:5199/?tracks'                                   # 进来就是多轨（字幕 / 转场 / 逐镜 / 幕底 / 配音 / 音效 + 进度轨），之后自动跟盘；?live 同义
+                                                                       # 契约不全不会装任何工程，右下角点名缺哪个模块——回 ⑤-1 补齐；单轨"成片（实时）"2026-09-21 已下线
 ```
 - **状态清单 `pipeline.json`**（工程根）：工作台 dev server 按盘上产物**实时推导**每镜状态（占位 / 已实现 / 已渲 / 已过闸、场景比段新 = 过期），
   不依赖 agent 记得写；agent 只在盘上推不出的事上落一笔，都走 `node <skill根>/scripts/pipeline_state.mjs`（在工程根或 remotion/ 下执行）：
@@ -279,6 +313,7 @@ open 'http://localhost:5199/?live'                                     # ?live =
   `Subtitles.tsx` 导出 `Subtitles` + `phrases()`（全部可见字幕段：已扣静音区、已做显示映射）+ `SubtitleLine`（单句静态渲染，Subtitles 自己也用它画）；
   `Environment.tsx` 导出 `Environment`（幕底画布，画在所有镜头之下）与 `Overlays`（幕级覆盖：黑震切帧 / 落幕等，画在镜头之上、字幕之下），`Main.tsx` 从这里取；
   `params.ts` 照模板抄（`useParams` / `ParamsProvider` / `OVERRIDES`），`remotion/overrides.json` 建成 `{}`；
+  **配音文件放 `public/narration.wav`**（模板 `MainVideo-example.tsx` 的约定；工作台多轨的配音块按 narration / full 解析，别叫别的名字——2026-09-21 实测叫错名字多轨整条静音、导出丢人声）；
   实拍底床用 `template/components/bed.tsx` 的 `Bed`（根元素 `className="wb-bed"`）——工作台右键导透明通道时按这个标记把底床去掉，只留动效本体。
   **`overrides.json` 归工作台写、agent 永不改**：用户在面板改的键以它为准，agent 只改 tsx 默认值——这就是双写冲突的解法；
   渲染（render_shots / 工作台导出）读同一份，所以定版前要看一眼它是否为空（用户调过参就以调过的为准交付，交付说明里写明）。
@@ -385,7 +420,7 @@ python3 scripts/contact_sheet.py /tmp/qa_vN /tmp/qa_vN_sheets
 （fork 出来的评审继承制作者视角，对照物又是制作者自己写的 SHOTBOOK，形成自证闭环）。
 派发 / 等待 / 判活 / 重派按 review-protocol §1.6 的 **harness 无关原语表**（PACKET / DISPATCH / FAN-OUT / WAIT / LIVENESS / RE-DISPATCH，Claude Code · Codex · headless 各一列）；**WAIT 以落盘 `REVIEW.md` 的结束行为准，不以子代理完成通知为准**。
 制作者自己的首轮版式过目也委托子代理（只回文字缺陷清单，几十张图的图像 token 不进主上下文）。
-备齐协议 §1.2 的材料四件套，评审按 rubric 出 P0/P1/P2 清单，**修完 P0 + P1 才算过关**；返修按协议 §3 给量测数字、只渲受影响段。
+备齐协议 §1.2 的材料五件套，评审按 rubric 出 P0/P1/P2 清单，**修完 P0 + P1 才算过关**；返修按协议 §3 给量测数字、只渲受影响段。
 **关卡 3 规则合规**：cinematography.md §5 八条逐镜核 + 交付前终检（调试 overlay 关、成片缩到 390px 宽可读），条目见 review-protocol.md §2。
 **审片循环**：机器闸全过后只做 **1 轮**独立审片 → 修 P0/P1 → **即交付**，同时问用户是否续审（自动轮次封顶 3 轮）
 并打开动效工作台（⑧）；遗留 P2 清单随交付物。细则 review-protocol.md §4。
@@ -412,14 +447,15 @@ bash <skill根>/runtime/check-runtime.sh          # 统一依赖体检 + 链好 
 cd <skill根>/workbench
 bash scripts/link-project.sh <本片工程>          # 链接本片工程（机器本地符号链接，不进库；手写 ln -sfn 循环不会替换指向旧工程目录的链接——2026-09-15 实测 logos 仍指上一支片）
 mkdir -p public && for f in <本片工程>/remotion/public/*; do ln -sfn "$f" "public/$(basename "$f")"; done
-npm run dev &                                     # 浏览器打开 http://localhost:5199/?live 并告知用户
+npm run dev &                                     # 浏览器打开 http://localhost:5199/?tracks 并告知用户（多轨面；?live 同义）
 sleep 4 && curl -s http://localhost:5199 | grep -q '动效工作台' && echo "工作台 OK" || echo "FAIL: 工作台未起——禁止用 remotion studio 代替"
 ```
 **防误操作**：交付给用户的界面**只能是这个工作台**（页面标题「TalkCraft Workbench · 动效工作台」，上面那行断言就是核验）。
 `npx remotion studio`（工程内）或工作台的 `npm run studio` 是开发者调参入口，**不是**交付面，不得用它代替工作台；
 `npm run dev` 必须从 `<skill根>/workbench` 执行（别在本片工程目录里起）。
 
-工作台里点「素材 → 拆解导入」即把成片拆成多轨：逐句字幕（文本可改）/ 幕级覆盖 / 转场标记 / 逐镜参数化镜头 / 幕底 / 配音 / 逐条音效；
+工作台打开（`?tracks`）就是多轨：逐句字幕（文本可改）/ 幕级覆盖 / 转场标记 / 逐镜参数化镜头 / 幕底 / 配音 / 逐条音效——自 ⑤-2 起它就在，交付时只是全部变绿；
+**交付面必须是这个多轨面**，不是单轨「成片（实时）」（2026-09-21 用户反馈：成片做完打开的还是单轨进度台，没法分轨改背景 / 动效 / 字幕 / 音效）；
 镜头里每个场景 `PARAMS` 声明的文案 / 颜色 / 字号 / 位置 / 入场方向逐项可调（词锚节拍、时长、缓动、相机固定），
 改动写回本片 `remotion/overrides.json`，渲染读同一份；改完点「导出成片」（内置 Remotion 渲染，遵守单并发纪律）。详见 `workbench/README.md` / `GUIDE.md` ⑥。
 接入按真实路径解析、契约模块缺哪个只降级哪个（`workbench/kbsrc.map.mjs`）；本 skill 产出的工程按 ⑤「拆解契约」六个文件写就能拆——
@@ -438,11 +474,12 @@ X [`@VincentWei93`](https://x.com/VincentWei93) ·
 | 排版：放哪 / 多大 / 怎么对齐（栅格 · 间距令牌 · 居中 · 字阶 · 碰撞 · 校验九项） | `references/layout.md` |
 | 给镜头做背景/主体/文字分层设计 | `references/shot-design.md`（三面工作单 + 七型预设） |
 | 镜头方法论/反PPT/SHOTBOOK格式/验收 | `references/cinematography.md`（+ shotbook-example.md） |
-| 审片：关卡 2 材料四件套 / rubric / 缺陷分级 · 关卡 3 · 返修纪律 · 审片循环 | `references/review-protocol.md`（评审 subagent 必读） |
+| 审片：关卡 2 材料五件套 / rubric / 缺陷分级 · 关卡 3 · 返修纪律 · 审片循环 | `references/review-protocol.md`（评审 subagent 必读） |
 | 转场（六式代码）/ 长镜头 | `template/motion-systems/transitions.tsx` / `longtake.tsx`（cinematography.md §3、§3.5） |
 | 纯文字镜配线稿示意图（G5：词汇 · 语义图形词典 · 节拍纪律 · 落位自检）| `references/schematic.md` → `template/motion-systems/schematic.tsx` + `icons.ts`（`scripts/fetch_icons.py` 抓 Iconify lucide） |
 | 视频容器边框八式（单视频镜不裸贴、不装假播放器；任何卡的视频区可包） | `template/components/theme-frame.tsx`（规则与选式：design-language §1.3） |
-| 选动效/查参数和坑 | `references/taxonomy.md` → `references/cards/` → `template/cards/`（tsx 源码）+ `demos/`/`gallery/`（预览） |
+| 选动效/查参数和坑 | `references/taxonomy.md`（两道生成索引：输入类型 / 语义）→ `references/cards/` → `template/cards/`（tsx 源码）+ `demos/`/`gallery/`（预览） |
+| 口播稿逐句语义标注（②-1）· 选卡候选表 · 卡索引生成 | `references/semantic-annotation.md` · `scripts/semantic_annotate.py` · `scripts/card_match.py` · `scripts/cards_index.py` |
 | 找素材 · 配图采集 · 网页拍摄素材采集（全页 2× 长图 + DOM 坐标 JSON） | `references/broll-sources.md` |
 | 开工体检（③ 素材期 `--media-only` / ④→⑤ 闸全量：人物素材帧率·重复帧·时长·比例 + SHOTBOOK 素材对账·未完成清单） | `scripts/preflight.py` |
 | 静止探针（母版前用真实合成帧差预判 freezedetect） | `scripts/freeze_probe.py` |
@@ -450,7 +487,7 @@ X [`@VincentWei93`](https://x.com/VincentWei93) ·
 | 新增配方卡 | `references/demo-spec.md`，验证 `node scripts/verify-demo.mjs <slug>` |
 | 可复制代码 | `template/cards/`（108 卡逐卡自包含 tsx）、`template/motion-systems/`（极缓推拉相机/让位/桥）、`template/components/`（字幕/花字/铅笔/吉祥物） |
 | 成片后人工微调 / 导出 | `workbench/`（剪映式工作台：多轨时间线 + 全卡参数化 + 成片拆解 + Remotion 渲染导出） |
-| 制作全程实时看板（⑤-2 起常开：进度轨 / 阶段栏 / 单镜预览 / 半成品不盖页）· 状态清单 | `workbench/docs/live-pipeline.md` · `scripts/pipeline_state.mjs`（`--pass` / `--issue` / `--stage`；状态按产物自动推） |
+| 制作全程实时看板（⑤-2 起常开、打开即多轨且自动跟盘：进度轨 / 镜头状态角标 / 阶段栏 / 单镜预览 / 半成品不盖页）· 状态清单 | `workbench/docs/live-pipeline.md` · `scripts/pipeline_state.mjs`（`--pass` / `--issue` / `--stage`；状态按产物自动推） |
 | 字级时间戳（本机 CPU） | `scripts/timestamps_cpu.py`（FireRedASR2-CTC 默认 / faster-whisper 备选，+ 口播稿逐字对齐）→ `scripts/make_timing.py` |
 | 一键配音+时间戳（Fish Audio 免费层） | `scripts/tts_fishaudio.py`（基于 s2.1-pro-free 流式 TTS，生成 full.wav + timestamps.json + 可选 timing.json） |
 | 配音预剪（口水词 / 结巴重说 / 过长停顿，时间戳之前跑；同一 EDL 剪人物视频） | `scripts/voice_trim.py`（②-0；稿子为真值只剪稿外插入段；词表来源 ASR / 逐字 SRT / 词级 JSON；`cuts.json` EDL 含时间轴映射） |

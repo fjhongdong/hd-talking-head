@@ -23,7 +23,7 @@ SKILL = PACKAGE_ROOT if __file__ != "<stdin>" else None
 ENTRY = "scripts/huashu_motion_adapter.py"
 VERSION = "1.2.0"
 DEPENDENCY_ID = "huashu-art-motion"
-UPSTREAM_COMMIT = "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c"
+UPSTREAM_COMMIT = "a97c45018d46e950d56d61981138e08f4e092909"
 DEFAULT_REGISTRY = "references/verified-template-registry.json"
 PACKAGES = {"playwright": "1.61.0", "numpy": "2.5.3", "Pillow": "12.3.0",
             "fonttools": "4.66.1", "brotli": "1.2.0"}
@@ -53,9 +53,8 @@ def native_templates(project_root):
     This catalog describes authoring routes, not inherited visual approval.
     Research recipes remain research recipes even though scenes can render them.
     """
-    root = Path(project_root).resolve(strict=True) / "vendor/huashu-art-motion"
-    if subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != UPSTREAM_COMMIT:
-        raise ValueError("Huashu native Skill source revision changed")
+    from motion_native_skill_adapter import source_root
+    root = source_root(project_root, dependency_id=DEPENDENCY_ID)
     schema = json.loads((root / "scripts/engine/clip_schema.json").read_bytes())
     rows = {}
     for grammar in schema["grammars"]:
@@ -120,6 +119,186 @@ def prepare_native_project(project_directory, project_root=SKILL):
     return destination
 
 
+def keynote_autosize_source(source):
+    """Build the local T2 adaptation while keeping the upstream source intact."""
+    old_calls = "rowGeo(j, n, ctx, s.cards.length), Bp = j < n - 1 ? rowGeo(j, n - 1, ctx, s.cards.length) : A"
+    new_calls = "rowGeo(j, n, ctx, s.cards), Bp = j < n - 1 ? rowGeo(j, n - 1, ctx, s.cards) : A"
+    old_geometry = """function rowGeo(j, n, ctx, total) {
+  const { W, u } = ctx, gap = 44 * u;
+  if (ctx.portrait) { const w = W * 0.86, h = Math.min(400 * u, (G.bh - (total - 1) * gap) / total), y0 = G.cy - (n * h + (n - 1) * gap) / 2; return { cx: W / 2, cy: y0 + j * (h + gap) + h / 2, w, h }; }"""
+    new_geometry = """const cardRowLayouts = new WeakMap();
+function cardTextLayout(g, text, width, size, family, weight) {
+  g.save(); g.font = `${weight} ${size}px "${family}"`; g.letterSpacing = '0px';
+  const lines = []; let line = '';
+  for (const char of String(text || '')) {
+    if (char === '\\n') { lines.push(line); line = ''; continue; }
+    if (g.measureText(char).width > width) throw new Error('Card text cannot fit the available width');
+    if (line && g.measureText(line + char).width > width) { lines.push(line); line = char; }
+    else line += char;
+  }
+  if (line) lines.push(line);
+  g.restore(); return {lines, size};
+}
+function cardTextHeight(g, q, width, u) {
+  const pad = 48 * u, tile = 110 * u, tx = pad + tile + 34 * u;
+  const nw = q.data && q.data.value != null ? Math.min(340 * u, width * 0.36) : 0;
+  const tw = width - tx - pad - nw;
+  if (tw <= 0) throw new Error('Card has no available text width');
+  const tl = cardTextLayout(g, q.text, tw, 62 * u, 'PuHui-Bold', '600');
+  const sl = cardTextLayout(g, q.sub, tw, 38 * u, 'PuHui-Medium', '400');
+  const titleHeight = tl.lines.length ? tl.size + (tl.lines.length - 1) * tl.size * 1.15 : 0;
+  const block = titleHeight + (sl.lines.length ? 22 * u + sl.lines.length * sl.size * 1.4 : 0);
+  return Math.max(tile, block) + 2 * pad;
+}
+function imageHeaderLayout(g, q, width, u) {
+  const tw = width - 176 * u;
+  const title = cardTextLayout(g, q.text, tw, 56 * u, 'PuHui-Bold', '600');
+  const sub = cardTextLayout(g, q.sub, tw, 34 * u, 'PuHui-Medium', '400');
+  const titleBottom = 40 * u + title.size * 0.85 + Math.max(0, title.lines.length - 1) * title.size * 1.2;
+  const subBottom = sub.lines.length ? titleBottom + 24 * u + sub.size + (sub.lines.length - 1) * sub.size * 1.35 : titleBottom;
+  return {title, sub, height: Math.max(230 * u, subBottom + 40 * u)};
+}
+function compactCardLayout(g, q, width, u) {
+  if (q.data && q.data.value != null) throw new Error('Card value needs more available space');
+  const text = [q.text, q.sub].filter(Boolean).join(' · ');
+  const layout = cardTextLayout(g, text, width - 24 * u, 62 * u, 'PuHui-Bold', '600');
+  return {...layout, height: layout.lines.length * layout.size * 1.15 + 24 * u};
+}
+function rowGeo(j, n, ctx, cards) {
+  const { W, u } = ctx, gap = 44 * u, total = cards.length;
+  if (ctx.portrait) {
+    const w = W * 0.86, available = (G.bh - (total - 1) * gap) / total;
+    let h = cardRowLayouts.get(cards);
+    if (h == null) {
+      const g = document.createElement('canvas').getContext('2d');
+      let required = Math.max(...cards.map(card => cardTextHeight(g, card.q, w, u)));
+      if (required > available) {
+        required = Math.max(...cards.map(card => compactCardLayout(g, card.q, w, u).height));
+      }
+      if (required > available) throw new Error('Card text exceeds the available safe area');
+      h = Math.min(available, Math.max(400 * u, required));
+      cardRowLayouts.set(cards, h);
+    }
+    const y0 = G.cy - (n * h + (n - 1) * gap) / 2;
+    return {cx: W / 2, cy: y0 + j * (h + gap) + h / 2, w, h};
+  }"""
+    old_text = """const tl = fitB(g, q.text || '', tw, 62 * u, 'PuHui-Bold', { maxLines: 2, weight: '600 ', min: 0.6 });   // 标题放不下就折两行，不再截掉后半句
+    const sl = q.sub ? fitB(g, q.sub, tw, 38 * u, 'PuHui-Medium', { maxLines: tl.lines.length > 1 ? 1 : 2, min: 0.75 }) : { lines: [], size: 0 };"""
+    new_text = """const tl = cardTextLayout(g, q.text, tw, 62 * u, 'PuHui-Bold', '600');
+    const sl = cardTextLayout(g, q.sub, tw, 38 * u, 'PuHui-Medium', '400');"""
+    old_portrait = """  } else {
+    drawTile(pad, (Bh - tile) / 2);
+    const tx = pad + tile + 34 * u, nw = hasNum ? Math.min(340 * u, Bw * 0.36) : 0, tw = Bw - tx - pad - nw;"""
+    new_portrait = """  } else {
+    if (Bh < cardTextHeight(g, q, Bw, u)) {
+      const compact = compactCardLayout(g, q, Bw, u);
+      g.font = `600 ${compact.size}px ${ZHB}`; g.letterSpacing = '0px';
+      g.fillStyle = T.head; g.textAlign = 'center'; g.textBaseline = 'middle';
+      const first = Bh / 2 - (compact.lines.length - 1) * compact.size * 1.15 / 2;
+      compact.lines.forEach((line, index) => g.fillText(line, Bw / 2, first + index * compact.size * 1.15));
+      return;
+    }
+    drawTile(pad, (Bh - tile) / 2);
+    const tx = pad + tile + 34 * u, nw = hasNum ? Math.min(340 * u, Bw * 0.36) : 0, tw = Bw - tx - pad - nw;"""
+    old_image_geometry = """const cd = s.cards[0], [iw0, ih0] = MD.size(cd.im), ar = iw0 / ih0;
+      if (!ctx.portrait"""
+    new_image_geometry = """const cd = s.cards[0], [iw0, ih0] = MD.size(cd.im), ar = iw0 / ih0;
+      const measuredHead = ctx.portrait ? imageHeaderLayout(document.createElement('canvas').getContext('2d'), cd.q, maxW, u).height : head;
+      if (ctx.portrait && measuredHead + 2 * pad >= maxH) throw new Error('Image card text exceeds the available safe area');
+      if (!ctx.portrait"""
+    old_image_size = """let iw = maxW - 2 * pad, ih = iw / ar; if (ih > maxH - head - 2 * pad) { ih = maxH - head - 2 * pad; iw = ih * ar; }
+        const cw = Math.max(iw + 2 * pad, Math.min(maxW, 760 * u)), ch = ih + head + 2 * pad;
+        cd.box = { w: cw, h: ch, img: { x: (cw - iw) / 2, y: head + pad, w: iw, h: ih } };"""
+    new_image_size = """let iw = maxW - 2 * pad, ih = iw / ar; if (ih > maxH - measuredHead - 2 * pad) { ih = maxH - measuredHead - 2 * pad; iw = ih * ar; }
+        const cw = ctx.portrait ? maxW : Math.max(iw + 2 * pad, Math.min(maxW, 760 * u)), ch = ih + measuredHead + 2 * pad;
+        cd.box = { w: cw, h: ch, img: { x: (cw - iw) / 2, y: measuredHead + pad, w: iw, h: ih } };"""
+    old_image_text = """const tl = fitB(g, q.text || '', tw, 56 * u, 'PuHui-Bold', { maxLines: 2, weight: '600 ', min: 0.7 }); g.font = `600 ${tl.size}px ${ZHB}`; g.fillStyle = T.head;
+      tl.lines.forEach((ln, k) => g.fillText(ln, tx, hp + tl.size * 0.85 + k * tl.size * 1.2));
+      // 标题占两行时说明只留一行，卡头放得下
+      if (q.sub) { const sl = fitB(g, q.sub, tw, 34 * u, 'PuHui-Medium', { maxLines: tl.lines.length > 1 ? 1 : 2, min: 0.75 }); g.font = `400 ${sl.size}px ${ZH}`; g.fillStyle = T.body;"""
+    new_image_text = """const {title: tl, sub: sl} = imageHeaderLayout(g, q, Bw, u);
+      g.font = `600 ${tl.size}px ${ZHB}`; g.fillStyle = T.head;
+      tl.lines.forEach((ln, k) => g.fillText(ln, tx, hp + tl.size * 0.85 + k * tl.size * 1.2));
+      if (q.sub) { g.font = `400 ${sl.size}px ${ZH}`; g.fillStyle = T.body;"""
+    for original, replacement in ((old_calls, new_calls), (old_geometry, new_geometry),
+                                  (old_text, new_text), (old_portrait, new_portrait),
+                                  (old_image_geometry, new_image_geometry),
+                                  (old_image_size, new_image_size), (old_image_text, new_image_text)):
+        if source.count(original) != 1:
+            raise ValueError("The original Huashu T2 source changed; cannot apply card layout")
+        source = source.replace(original, replacement, 1)
+    return source
+
+
+def kurzgesagt_autosize_source(source, keynote_source):
+    """Use the same measured wrapping for the original node-label capsules."""
+    adapted_keynote = keynote_autosize_source(keynote_source)
+    start = adapted_keynote.index("function cardTextLayout(")
+    end = adapted_keynote.index("function cardTextHeight(", start)
+    shared_layout = adapted_keynote[start:end]
+    marker = "CLIPS.y1_kurzgesagt = (() => {"
+    old_label = """const lf = TY.fitFloor(g, nd.q.text || '', ctx.W * 0.44 - 56 * u, (ctx.portrait ? 44 : 38) * u, 'PuHui-Medium', { maxLines: 1, floor: 30 * u }), lab = lf.lines[0] || '';   // 长标签先缩到下限，再截断加「…」，不缩到看不清
+        g.font = `${lf.size}px "PuHui-Medium"`; const tw = g.measureText(lab).width, bw = tw + 56 * u, bh = 70 * u;
+        const ly = nd.y + fy + (nd.y < cy - R * 0.5 && ctx.portrait ? -nr - 70 * u : nr + 70 * u);"""
+    new_label = """const lf = cardTextLayout(g, nd.q.text, ctx.W * 0.44 - 56 * u, (ctx.portrait ? 44 : 38) * u, 'PuHui-Medium', '400');
+        g.font = `${lf.size}px "PuHui-Medium"`; const tw = Math.max(0, ...lf.lines.map(line => g.measureText(line).width)), bw = tw + 56 * u, bh = Math.max(70 * u, lf.lines.length * lf.size * 1.15 + 24 * u);
+        let ly = nd.y + fy + (nd.y < cy - R * 0.5 && ctx.portrait ? -nr - 35 * u - bh / 2 : nr + 35 * u + bh / 2);"""
+    old_view = """const z = cam.z || 1, vx0 = cam.x - ctx.W / 2 / z, vx1 = cam.x + ctx.W / 2 / z, hw = bw * sc / 2 + 20 * u / z;"""
+    new_view = """const z = cam.z || 1, vx0 = cam.x - ctx.W / 2 / z, vx1 = cam.x + ctx.W / 2 / z, hw = bw * sc / 2 + 20 * u / z;
+        const vy0 = cam.y - ctx.H / 2 / z, vy1 = cam.y + ctx.H / 2 / z, hh = bh * sc / 2 + 20 * u / z;
+        if (vy1 - vy0 > 2 * hh) ly = clamp(ly, vy0 + hh, vy1 - hh);"""
+    old_shadow = "g.roundRect(-bw / 2 + 6 * u, -bh / 2 + 8 * u, bw, bh, bh / 2);"
+    new_shadow = "g.roundRect(-bw / 2 + 6 * u, -bh / 2 + 8 * u, bw, bh, Math.min(35 * u, bh / 2));"
+    old_card = "g.roundRect(-bw / 2, -bh / 2, bw, bh, bh / 2);"
+    new_card = "g.roundRect(-bw / 2, -bh / 2, bw, bh, Math.min(35 * u, bh / 2));"
+    old_draw = "g.fillStyle = P.pillInk; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(lab, 0, 2 * u);"
+    new_draw = """g.fillStyle = P.pillInk; g.textAlign = 'center'; g.textBaseline = 'middle';
+        lf.lines.forEach((line, index) => g.fillText(line, 0, (index - (lf.lines.length - 1) / 2) * lf.size * 1.15 + 2 * u));"""
+    for original, replacement in ((marker, marker + "\n" + shared_layout),
+                                  (old_label, new_label), (old_view, new_view),
+                                  (old_shadow, new_shadow), (old_card, new_card),
+                                  (old_draw, new_draw)):
+        if source.count(original) != 1:
+            raise ValueError("The original Huashu Y1 source changed; cannot apply card layout")
+        source = source.replace(original, replacement, 1)
+    return source
+
+
+def adapted_card_source(name, native):
+    source = (native / "scripts/engine" / name).read_text()
+    if name == "clips/t2_keynote_ui.js":
+        return keynote_autosize_source(source)
+    if name == "clips/y1_kurzgesagt.js":
+        keynote = (native / "scripts/engine/clips/t2_keynote_ui.js").read_text()
+        return kurzgesagt_autosize_source(source, keynote)
+    raise ValueError("Unknown Huashu card adaptation")
+
+
+def prepare_keynote_autosize(root, brief, native):
+    routes = {"grammar-t2-keynote-ui": "clips/t2_keynote_ui.js",
+              "grammar-y1-kurzgesagt": "clips/y1_kurzgesagt.js"}
+    name = routes.get(brief["template_id"])
+    if name is None:
+        return
+    root = Path(root).resolve(strict=True)
+    original = native / "scripts/engine" / name
+    local = root / relative(brief["project_directory"]) / "engine" / name
+    current = root
+    for part in local.relative_to(root).parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("Huashu project engine path may not contain symlinks")
+    if not local.resolve(strict=True).is_relative_to(root):
+        raise ValueError("Huashu project engine path escapes the current Job")
+    if local.stat().st_nlink != 1:
+        raise ValueError("Huashu project engine file must not share a hard link")
+    adapted = adapted_card_source(name, native)
+    if local.read_text() == original.read_text():
+        local.write_text(adapted)
+    elif local.read_text() != adapted:
+        raise ValueError("Huashu T2 project source is not the supported card layout")
+
+
 def native_render_command(root, brief, argv, runtime, native, *, check_runtime_links=True):
     """Validate the schema-2 bridge's direct original Python renderer invocation.
 
@@ -144,7 +323,10 @@ def native_render_command(root, brief, argv, runtime, native, *, check_runtime_l
                   for folder in ("lib", "clips") for p in (native / "scripts/engine" / folder).rglob("*") if p.is_file()]
     for name in invariant:
         local, original = engine / name, native / "scripts/engine" / name
-        if local.is_symlink() or not local.is_file() or sha(local) != sha(original):
+        adapted_card = (name in {"clips/t2_keynote_ui.js", "clips/y1_kurzgesagt.js"}
+                        and local.is_file()
+                        and local.read_text() == adapted_card_source(name, native))
+        if local.is_symlink() or not local.is_file() or (sha(local) != sha(original) and not adapted_card):
             raise ValueError("Huashu original engine source changed: " + name)
     options, flags, position = {}, set(), 2
     values = {"--out", "--spec", "--width", "--height", "--fps", "--from", "--to", "--film", "--solo", "--crf"}
@@ -391,23 +573,18 @@ def local_cue_frame(word_frame, segment_start_frame):
 
 
 def source_snapshot(project_root):
-    root = Path(project_root).resolve(strict=True) / "vendor/huashu-art-motion"
-    head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-    if head != UPSTREAM_COMMIT:
-        raise ValueError("Huashu vendor commit changed")
-    paths = subprocess.check_output(["git", "-C", str(root), "ls-files", "scripts/engine/lib",
-        "scripts/engine/spec_assets.py",
-        "scripts/engine/render.py", "scripts/engine/clip.html", "scripts/engine/clip.js",
-        *["scripts/engine/clips/" + g + ".js" for g in KINDS]], text=True).splitlines()
-    if not paths or subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--", *paths], text=True).strip():
-        raise ValueError("Huashu source has local changes")
+    from motion_native_skill_adapter import source_root
+    root = source_root(project_root, dependency_id=DEPENDENCY_ID)
+    engine = root / "scripts/engine"
+    paths = [engine / name for name in ("spec_assets.py", "render.py", "clip.html", "clip.js")]
+    paths.extend(engine / "clips" / (grammar + ".js") for grammar in KINDS)
+    paths.extend(path for path in (engine / "lib").rglob("*") if path.is_file())
     files = {}
-    for name in paths:
-        p = root / relative(name)
-        if p.is_symlink() or not p.is_file():
+    for path in sorted(paths):
+        if path.is_symlink() or not path.is_file():
             raise ValueError("Huashu source closure incomplete")
-        files[name] = sha(p)
-    return {"root": str(root), "commit": head, "files": files}
+        files[path.relative_to(root).as_posix()] = sha(path)
+    return {"root": str(root), "commit": UPSTREAM_COMMIT, "files": files}
 
 
 def check_runtime(project_root, *, browser_probe=False, executable_paths=None):

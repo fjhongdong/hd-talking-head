@@ -1,6 +1,6 @@
 # Lemo-Opuscar 原生接入
 
-Lemo 使用官方 vendor `lemo-opuscar@bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00`。当前固定来源含 66 个独立 styles；目录由原生 `styles/*/style.json` 与 `STYLE.md` 派生，不在适配器或发现入口另写固定数量。能力库身份统一为：
+Lemo 使用官方 `lemo-opuscar@439b98af08b04400f8fd8a8dd19cd773c0c96532`。源码含 99 个原生风格，当前口播任务可选其中 97 个，使用所选风格的 `style.json` 和 `STYLE.md`。Firefly Pointillism 和 Oscilloscope Math 分别使用独立的横屏 Python 粒子引擎和 Manim，等待竖屏接入。能力库身份如下。
 
 ```text
 渠道：lemo-opuscar

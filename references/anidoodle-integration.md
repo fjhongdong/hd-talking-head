@@ -1,6 +1,6 @@
 # Anidoodle 完整原生接入
 
-固定官方 `alexgreensh/anidoodle` 提交 `9c20e77467be393e54c7193611eeec2f7bfb8cc7`，版本0.10.1。完整仓库保存在 `vendor/anidoodle`，不改、不提取第三方实现。来源逐文件记录为 `anidoodle-native-source.json`；模板为 `anidoodle-template-catalog.json`。父级由专用 `scripts/anidoodle_native_adapter.py` 派发、捕获实际调用并消费完成结果。
+固定官方 `alexgreensh/anidoodle` 提交 `4ae27d2c281fcfd01bce87ab13dc5ad4df81a795`，版本0.10.1。完整仓库保存在 `vendor/anidoodle`，不改、不提取第三方实现。来源逐文件记录为 `anidoodle-native-source.json`；模板为 `anidoodle-template-catalog.json`。父级由专用 `scripts/anidoodle_native_adapter.py` 派发、捕获实际调用并消费完成结果。
 
 ## 渠道、模板和用途
 
@@ -24,6 +24,6 @@
 
 `scripts/anidoodle_native_runtime.py`只检查并复用现有包内运行依赖：Hyperframes的esbuild0.25.12，以及Playwright1.64.0和真实已缓存Chromium。`anidoodle_node_runtime.mjs`用Node resolver将原生bare ESM `esbuild`导入指到该原版依赖；`NODE_PATH`让原生detect找到现有Playwright。不在vendor增加node_modules，不全局安装，不隐式下载。隔离resolver需要Node≥22.15；当前上游引擎本体最低Node20。缺已有依赖时明确停止，准备该已有依赖后再继续。
 
-专用模块保留既有schema2 brief字段和schema3 result字段；`native_options=[]`、`canvas_transport=identity`。`ENTRY=scripts/anidoodle_native_adapter.py`，`VERSION=1.0.0`，`primary_renderer=HTMLCanvas`，`renderer_version=anidoodle-0.10.1-9c20e77467be`。`source_root/load_template_catalog/native_task/capture_render/publish_completed/inspect_result/load_result/create_adapter/create_binding/create_artifact_probe`与已有原生桥接同签名。路径、文件描述符、输入核验、原声检查、进程执行、ReferenceProcessAdapter和父级批准事实沿用现有共用工具。
+专用模块保留既有schema2 brief字段和schema3 result字段；`native_options=[]`、`canvas_transport=identity`。`ENTRY=scripts/anidoodle_native_adapter.py`，`VERSION=1.0.0`，`primary_renderer=HTMLCanvas`，`renderer_version=anidoodle-0.10.1-4ae27d2c281f`。`source_root/load_template_catalog/native_task/capture_render/publish_completed/inspect_result/load_result/create_adapter/create_binding/create_artifact_probe`与已有原生桥接同签名。路径、文件描述符、输入核验、原声检查、进程执行、ReferenceProcessAdapter和父级批准事实沿用现有共用工具。
 
 资格样片位于完整Skill包外 `capability-samples/20261104-library-expansion/anidoodle/`。样片是标明身份的零付费开发素材；正式主阶段消费结果以本次父级Smoke为准。不改旧Job、不重签或重做已交付视频。

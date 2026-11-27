@@ -7,7 +7,7 @@ import shutil
 import argparse
 import hashlib
 
-VERSION = "0.8.167"
+VERSION = "0.9.100"
 PACKAGE = "hyperframes"
 
 def resolve_tools(node=None, ffmpeg=None, ffprobe=None):
@@ -22,7 +22,7 @@ def resolve_runtime(root):
     package = runtime / "node_modules" / PACKAGE / "package.json"
     data = json.loads(package.read_text())
     if data.get("name") != PACKAGE or data.get("version") != VERSION:
-        raise ValueError("runtime_root is not hyperframes@0.8.167")
+        raise ValueError("runtime_root is not hyperframes@0.9.100")
     cli = runtime / "node_modules" / PACKAGE / "bin" / "hyperframes.mjs"
     if not cli.is_file():
         raise ValueError("published HyperFrames CLI is missing")
@@ -35,7 +35,7 @@ def prepare_runtime(project_root):
         raise ValueError("not a talking-head project root")
     skill = PACKAGE_ROOT
     source = skill / "assets" / "hyperframes-runtime"
-    target = project / "runtime" / "hyperframes-0.8.167"
+    target = project / "runtime" / "hyperframes-0.9.100"
     if not (source / "package.json").is_file() or not (source / "package-lock.json").is_file():
         raise ValueError("hyperframes runtime package resources are missing")
     if target.is_symlink() or target.resolve() != target.absolute() or not target.resolve().is_relative_to(project):

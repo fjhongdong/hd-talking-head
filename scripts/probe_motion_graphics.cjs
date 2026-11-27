@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
 async function main(){
  const [project,entry,id,secondsText]=process.argv.slice(2),seconds=Number(secondsText);
  if(!project||!entry||!id||!Number.isFinite(seconds)||seconds<=0)throw Error('invalid native clock input');
- const req=createRequire(path.join(project,'runtime/hyperframes-0.8.167/package.json'));
+ const req=createRequire(path.join(project,'runtime/hyperframes-0.9.100/package.json'));
  const puppeteer=req('puppeteer-core'),errors=[];
  const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox','--disable-gpu']});
  try{

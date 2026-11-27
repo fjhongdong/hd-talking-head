@@ -9,7 +9,7 @@ const {pipeline} = require('node:stream/promises');
 function resolveRuntime(root) {
   const runtime = fs.realpathSync(root);
   const pkg = JSON.parse(fs.readFileSync(path.join(runtime, 'node_modules/hyperframes/package.json'), 'utf8'));
-  if (pkg.name !== 'hyperframes' || pkg.version !== '0.8.167') throw new Error('HyperFrames runtime version drift');
+  if (pkg.name !== 'hyperframes' || pkg.version !== '0.9.100') throw new Error('HyperFrames runtime version drift');
   const cli = path.join(runtime, 'node_modules/hyperframes/bin/hyperframes.mjs');
   fs.accessSync(cli, fs.constants.R_OK);
   return {root: runtime, cli, version: pkg.version};
@@ -102,7 +102,6 @@ async function main(args) {
     html = replaceOnce(html, 'y: 455, // top of the row; x centers automatically', 'y: 100, // native crop safe area');
     // Use the native editable box/font parameters; Chinese labels need glyph width,
     // not the upstream short Latin demo's fixed 320px box.
-    const glyphs = Math.max(...b.labels.map(label => [...label].length));
     const maxBoxWidth = Math.floor((1008 - (b.labels.length - 1) * 60) / b.labels.length);
     const fontSize = 64;
     const boxWidth = 288;
@@ -110,6 +109,20 @@ async function main(args) {
     html = replaceOnce(html, 'boxW: 320,', `boxW: ${boxWidth},`);
     html = replaceOnce(html, 'gap: 190,', 'gap: 60,');
     html = replaceOnce(html, 'fontSize: 56,', `fontSize: ${fontSize},`);
+    // Measure the native label face before generating SVG geometry. Short
+    // labels retain the native box size; longer labels expand it within the
+    // same horizontal safe region and wrap into a taller box when necessary.
+    html = replaceOnce(html, 'white-space: nowrap;', 'white-space: normal; overflow-wrap: anywhere; line-height: 1.2;');
+    html = replaceOnce(html, 'var n = CONFIG.nodes.length;\n        var totalW',
+      `var n = CONFIG.nodes.length;
+        var measure = document.createElement("canvas").getContext("2d");
+        measure.font = "700 " + CONFIG.fontSize + "px PingFang SC, Heiti SC, sans-serif";
+        var labelWidth = Math.max.apply(null, CONFIG.nodes.map(function (node) { return measure.measureText(node.label).width; }));
+        CONFIG.boxW = Math.min(${maxBoxWidth}, Math.max(CONFIG.boxW, Math.ceil(labelWidth + 36)));
+        CONFIG.boxH = Math.max(CONFIG.boxH, Math.ceil(labelWidth / (CONFIG.boxW - 36)) * CONFIG.fontSize * 1.2 + 40);
+        var totalW`);
+    html = replaceOnce(html, '          labels.appendChild(label);',
+      '          labels.appendChild(label);\n          label.style.top = CONFIG.y + (CONFIG.boxH - label.offsetHeight) / 2 + "px";');
     html = replaceOnce(html, 'var DUR = 7;', `var DUR = ${duration};`);
     html = replaceOnce(html, 'var t = 0.3;', `var starts = ${JSON.stringify(b.label_frames.map(frame => frame / 24))};`);
     html = replaceOnce(html, 'CONFIG.nodes.forEach(function (_, i) {\n          var p = boxes[i];',

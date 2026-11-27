@@ -1,6 +1,6 @@
 # 语义动效规划接口与执行边界
 
-在 `visual_direction` 需要设计动作依赖时读取本文件。复用已批准的内容提炼，不新增确认阶段，不重写关键词。六类动作均提供严格规划校验。RelationMotion 与五类 SemanticState（`replacement`、`threshold`、`delay`、`hierarchy`、`feedback`）均已完成双输入正式资格、逐态像素与动作顺序验证、发布和登记；五类 SemanticState 还绑定了用户批准的 25 秒头像合成样片。普通 Job 只有在路由命中对应已登记模板、语义家族匹配且当前 ShotRecipe 绑定完整时才能执行；登记不替代当前 Job 的人工 canary 门。
+在 `visual_direction` 需要设计动作依赖时读取本文件，复用已批准的内容和关键词。RelationMotion 与五类 SemanticState（`replacement`、`threshold`、`delay`、`hierarchy`、`feedback`）均已完成双输入资格、逐态像素与动作顺序验证、发布和登记。五类 SemanticState 的 25 秒人工批准样片属于入库证据。普通 Job 使用对应已登记模板、匹配的语义家族和完整的当前 ShotRecipe，按[阶段合同](stage-contracts.md#制作交付与状态)制作交付。
 
 ```semantic-motion-status
 relation_motion: registered
@@ -13,7 +13,7 @@ production_policy: registered_templates_only
 当 `visual_direction` 发布了 `07-visual-direction/semantic-events.json` 时，
 它就是当前 VisualPlan 的事件身份真源。`visual_span_contract` 会校验该文件的
 批准记录、字节哈希、VisualPlan hash、事件帧窗和 span/segment 归属，并将事件计划
-传给 TalkCraft approved binding；canary 与全量 chunk assets 都必须通过这条绑定。
+传给 TalkCraft approved binding。正式 chunk assets 和选用该方案的独立资格样片共用这条绑定。
 brief 中引用的 `event_id` 还必须落在对应事件的局部帧窗和 brief `frame_scope` 内。
 
 没有该 artifact 的历史 Job 继续使用兼容的 v1 binding，不会被迁移或重签。事件计划

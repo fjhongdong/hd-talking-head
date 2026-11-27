@@ -4,7 +4,7 @@
 
 ## 来源与调用
 
-先读项目内 `vendor/huashu-motion/skills/huashu-motion/SKILL.md` 及其 `references/talking-head.md`、`references/contract.md`。当前固定提交为 `5f2608c2e12abcf518f74dde86093b19f7f88603`；源码由既有 `ensure_visual_broll_skills.py --skill huashu-motion` 准备，不修改上游。版本更新仍走统一依赖更新流程，不静默重签已有 Job。
+先读取项目内 `vendor/huashu-motion/skills/huashu-motion/SKILL.md` 及其 `references/talking-head.md`、`references/contract.md`。当前官方源码快照为 `f4f38bfe295a3f768753857be9236cc3277c7dad`，通过 `ensure_visual_broll_skills.py --skill huashu-motion` 准备。
 
 我方依赖 `huashu-motion-native`，入口 `scripts/huashu_stat_adapter.py`，运行检查 `scripts/huashu_stat_runtime.py`；版本 `1.0.0`、渲染器 `HuashuMotion`、执行器 `reference_adapter`。用 `create_adapter(project_root, python_executable, brief_loader, execution_mode=...)`、`create_binding(adapter, brief_bytes, reference_sample)`、`create_artifact_probe(ffprobe_executable)` 接入现有执行器。`brief_loader` 返回冻结的原始 bytes，不能重新序列化。
 
@@ -52,4 +52,4 @@ Treatment 的 `overlay_alignment` 为该组件记录一个事件：`slot=0 / kin
 
 当前已确认数字 7 测试样片的视觉，并已通过既有 MOV 的复用规范化检查。新增一次“1250 条”测试实际经过本包 adapter CLI → 固定原生 `new/fork/set/render` → 透明规范化：输出 6 秒、144 帧，完整动作位于所给安全区；入场采样为 1212、稳定采样为 1250、退场后全透明，文字完整。此结果证明新数值进入了原生生成封装，不是复制旧 MOV，也不是正式 Job 执行器或真实词锚验收。
 
-本次用户明确将真实数值口播对齐留到下一条视频。届时必须使用该片已批准的转写、剪后映射及正式 VisualPlan，完成原有 canary 与真人画面检查；不补造测试词表或继承测试数字的批准。不宣称全库或生产成片已通过。新问题保留失败日志并停下分析，不自动重试、修源码或切换路线。
+生产时使用本期已批准的转写、剪后映射及正式 VisualPlan，绑定真实数字和词锚，按[阶段合同](stage-contracts.md#制作交付与状态)执行。历史测试数字及批准记录仅用于对应样片。失败时保留相应调用记录供定位。

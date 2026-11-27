@@ -427,7 +427,7 @@ def approved_body_opening(job):
 
 def _rows(director, treatment, semantic_rows, generation_channels=None, *, job_dir=None):
     from .broll_skill_selection import source_channel
-    from .semantic_visual_plan import component_use
+    from .semantic_visual_plan import component_timing, component_use
 
     queries = {(q["segment_id"], q["component_id"]): q for q in treatment.get("motion_queries", [])}
     selected = treatment.get("skill_selection", {})
@@ -476,6 +476,7 @@ def _rows(director, treatment, semantic_rows, generation_channels=None, *, job_d
             semantic_row = semantic_rows.get((sid, cid))
             if semantic_row is None or semantic_row["type"] != ("贴片" if component_use(segment, component) == "overlay" else "B-roll"):
                 raise VisualConfirmationError("visual component is missing from semantic lists")
+            timing = component_timing(semantic_row, (sid, cid))
             generation = []
             for purpose in dict.fromkeys(s["purpose"] for s in steps
                     if (s["segment_id"], s["component_id"]) == (sid, cid)):
@@ -496,6 +497,7 @@ def _rows(director, treatment, semantic_rows, generation_channels=None, *, job_d
                          "visual_task": semantic_row["visual_task"],
                          **({"required_content": semantic_row["required_content"]}
                             if "required_content" in semantic_row else {}),
+                         **({"timing": timing} if timing is not None else {}),
                          "tags": tags, "source": source,
                          "generation_channel": "；".join(generation),
                          "channel": (source_channel(chosen["skill_id"]) if chosen else
@@ -691,17 +693,26 @@ def _display_cell(value):
     return str(value).replace("|", "／").replace("\n", "<br>")
 
 
-def _display_visual_task(row):
+def _display_visual_task(row, timings=None):
     details = []
     for item in row.get("required_content", {}).values():
         terms = "、".join(f"「{term}」" for term in item.get("terms", []))
         details.append(item["meaning"] + (f"（须显示 {terms}）" if terms else ""))
+    if timings is None:
+        timings = (ref.get("timing") for ref in row.get("components", ()))
+    for timing in timings:
+        if timing is None:
+            continue
+        start = timing.get("action_start_frame")
+        start_text = f"{start / 24:.3f}s 开始关键动作，" if start is not None else ""
+        details.append(start_text + f"{timing['settled_frame'] / 24:.3f}s 前落定，"
+                       f"完整展示至 {timing['visible_until_frame'] / 24:.3f}s")
     return "\n".join([row["visual_task"], *details])
 
 
 def confirmed_local_table(director, treatment, rows):
     """Render the exact local list to show before accepting a recovery reply."""
-    from .semantic_visual_plan import component_semantic_rows, component_use
+    from .semantic_visual_plan import component_semantic_rows, component_timing, component_use
 
     components = {(s['segment_id'], c['component_id']): (s, c) for s in director['segments']
                   for c in s['visual_strategy']['components']}
@@ -719,7 +730,8 @@ def confirmed_local_table(director, treatment, rows):
         use = component_use(segment, component)
         cells = (row['number'], f"{row['start_frame']/24:.3f}–{row['end_frame']/24:.3f}s",
                  '贴片' if use == 'overlay' else 'B-roll', semantic['quote'], semantic['semantic'],
-                 _display_visual_task(semantic), '／'.join(segment['visible_text']) or '—', row['candidate_id'])
+                 _display_visual_task(semantic, [component_timing(semantic, key)]),
+                 '／'.join(segment['visible_text']) or '—', row['candidate_id'])
         lines.append('| ' + ' | '.join(map(_display_cell, cells)) + ' |')
     return ('\n'.join(lines) + '\n').encode('utf-8')
 
@@ -850,6 +862,9 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     if coverage["blocking_issues"]:
         raise VisualConfirmationError("time coverage: " + "; ".join(coverage["blocking_issues"])
             + "; return to the affected semantic list, add a distinct supported task, match only new items and assign again")
+    if coverage["pacing_issues"]:
+        raise VisualConfirmationError("visual pacing: " + "; ".join(coverage["pacing_issues"])
+            + "; revise the affected windows and check word anchors again")
     numbering = _prior_numbering(job, numbering_scope_id)
     numbered_rows = number_visual_rows(rows, numbering)
     if approved_selection is not None and [
@@ -935,7 +950,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
                   + ("；" + str(s["description"]) if s.get("description") else "") for s in generated]
         lines.append("| " + " | ".join(cell(v) for v in (
             row["number"], "；".join(dict.fromkeys(f"{p['start']:.3f}–{p['end']:.3f}s" for p in parts)),
-            row["type"], row["spoken_text"], row["semantic"], visual_task(row), "、".join(row["tags"]),
+            row["type"], row["spoken_text"], row["semantic"],
+            visual_task(row, (part.get("timing") for part in parts)), "、".join(row["tags"]),
             "、".join(dict.fromkeys(p["channel"] for p in parts if p["channel"])) or "素材直用（创作来源未确认）",
             "；".join(dict.fromkeys(p["generation_channel"] for p in parts if p["generation_channel"])) or "—",
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
@@ -2182,10 +2198,11 @@ def generation_actions(job, *, account_limit=None, defer_submission=False, exclu
 
 def _semantic_handoffs(treatment, proposal_ref):
     from .motion_match_cache import selected_expression_bases
-    from .semantic_visual_plan import component_semantic_rows
+    from .semantic_visual_plan import component_semantic_rows, component_timing
 
     expressions = selected_expression_bases(treatment)
     return {key: {'proposal': proposal_ref, 'semantic_row': row,
+                  **({'timing': timing} if (timing := component_timing(row, key)) is not None else {}),
                   **({'expression_basis': expressions[key]} if key in expressions else {}),
                   **({'cinecode_input': material} if (material := _selected_cinecode_input(treatment, key)) else {})}
             for key, row in component_semantic_rows(treatment).items()}
@@ -2882,7 +2899,7 @@ def _validate_hyperframes_host_revision(before, after, project):
     old, new = Host(before), Host(after)
     if (old.scripts, old.events, old.links) != (new.scripts, new.events, new.links):
         raise VisualConfirmationError('HyperFrames repair changed parent scripts, events or stylesheet sources')
-    parser = project / 'runtime/hyperframes-0.8.167/node_modules/css-tree'
+    parser = project / 'runtime/hyperframes-0.9.100/node_modules/css-tree'
     node = shutil.which('node')
     if not node or not (parser / 'package.json').is_file():
         raise VisualConfirmationError('HyperFrames repair needs Node and css-tree from its prepared HyperFrames runtime')
@@ -3540,7 +3557,8 @@ def _validate_fresh_native_parent_inputs(root, proposal, original, segment, cid,
              for beat in original.get('skill_selection', {}).get(group, [])
              if (beat.get('segment_id'), beat.get('component_id')) == key]
     rows = [row for group in ('overlay', 'broll') for row in original.get('semantic_lists', {}).get(group, [])
-            if {'segment_id': key[0], 'component_id': cid} in row.get('components', [])]
+            if any((ref.get('segment_id'), ref.get('component_id')) == key
+                   for ref in row.get('components', []))]
     facts = _native_parent_input_facts(segment, cid, brief)
     if 'transcript' in facts and (len(beats) != 1 or facts['transcript'] != beats[0].get('transcript')):
         raise VisualConfirmationError('execution changed authorized native input: transcript')

@@ -4,7 +4,7 @@
 
 ## 支持边界
 
-- 使用归档的 HyperFrames 原生 `notification-cascade.html` 字节、背景与品牌资产；只替换模板公开变量，`adaptation_level=tokens_only`，不根据截图重画。
+- 使用归档的 HyperFrames 原生 `notification-cascade.html`、背景和品牌资产，并按 `content_reflow` 在当次渲染副本计算卡高与堆叠间距。正文与标题按实际字体换行，沿用原生词窗、入场顺序和收束动作。
 - 支持 `milestone_notifications`、`progress_sequence`、`delivery_checkpoints`，信息单元必须恰好为 4，`numeric_values=[]` 且 `numeric_scale=not_applicable`。
 - 第一阶段四条通知依次进入并重排，全部退出后第二阶段显示结论卡。不能删节点、加节点、拉伸时长或改变两阶段结构后继续沿用当前验证身份。
 - 原生合同固定为 1080×1920、24fps、336 帧、14 秒、H.264/yuv420p、无音轨。B-roll 音频继续使用 A-roll 主时钟；模板不生成声音。
@@ -71,4 +71,4 @@ probe = create_artifact_probe(ffprobe_executable=ffprobe_path)
 
 首次真实 CLI 编译会缓存 Inter / EB Garamond，并把精确 GSAP 3.14.2 内联到渲染输入；因此当前证据不能被描述成无条件完全离线。预检需在渲染前确认依赖已经可用，正式执行过程中不允许临时搜索素材或更换 CDN 版本。已有完整缓存可以被后续串行执行复用。
 
-历史资格只证明两组不同输入由同一原生模板正确产出，不批准当前内容。每个新 Job 仍要检查：四条通知的进入顺序、重排稳定态、退出连续性、结论卡完整性、中文字体实际回退、无越界/重叠/截断、头像和字幕安全区、回到 A-roll 的自然过渡。人工确认失败时进入当前 revision；不静默改模板、不伸缩已验证结构，也不直接交付资格样片。
+历史资格记录两组输入和对应原生结果。本期用实际字段绑定四条通知与结论，按词锚安排进入、重排和退出，在原生布局留出头像及字幕安全区。中文字体和结构继续走对应原生检查，本期交付按[阶段合同](stage-contracts.md#制作交付与状态)。

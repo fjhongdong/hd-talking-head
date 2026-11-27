@@ -15,8 +15,8 @@ MANIFEST = "release-manifest.json"
 REQUIRED = {
     "SKILL.md", "run.py", "scripts/package_paths.py", "edit/__init__.py", "edit/hd/__init__.py",
     "edit/hd/tools/state.py", "edit/hd/integrations/talkcraft/check_runtime.py",
-    "archives/sources/index.json", "archives/runtime/talkcraft.json", "vendor/video-use-skill/SKILL.md",
-    "scripts/verify_broll_template.py",
+    "archives/sources/index.json", "archives/runtime/talkcraft.json", "vendor/video-use/SKILL.md",
+    "scripts/verify_broll_template.py", "scripts/vendor_sources.py",
     "references/verified-template-registry.json",
 }
 
@@ -40,7 +40,9 @@ def package_files(root: Path, *, _directories: set[Path] | None = None) -> dict[
             name = entry.get("path")
             if name not in {"vendor/mg-styles-15", "vendor/cinecode", "vendor/video-shotcraft", "vendor/bb-video", "vendor/DataMagic",
                             "vendor/anidoodle", "vendor/sweety-handdraw-video", "vendor/lemo-opuscar",
-                            "vendor/garden-skills", "vendor/react-useanimations"}:
+                            "vendor/garden-skills", "vendor/react-useanimations", "vendor/huashu-art-motion",
+                            "vendor/huashu-motion", "vendor/wise-motion", "vendor/hyperframes",
+                            "vendor/onetake", "vendor/overlay-studio"}:
                 continue
             if not (isinstance(entry.get("files"), dict) and entry["files"]
                     and isinstance(entry.get("archives"), list) and entry["archives"]):

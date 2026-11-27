@@ -83,6 +83,11 @@ try {
   if (b.template_request.semantic_family !== 'plan_change_dialogue') throw new Error('Invalid Hypit semantic family');
   await copyCompiledNativeChatPackage(path.join(source, 'examples/semantic-composition/packages/chat-scene'), path.join(project, 'packages/chat-scene'));
   await cp(layout, path.join(project, 'packages/hypit-native-layout'), {recursive: true});
+  const cardCss = (await readFile(new URL('../assets/text-card-layout/card.css', import.meta.url), 'utf8'))
+    .replaceAll('.hd-text-card-content', '.bubble, .sender, header > div:last-child')
+    .replaceAll('.hd-text-card', '.bubble');
+  await writeFile(path.join(project, 'packages/hypit-native-layout/src/card-css.js'),
+    `export const cardCss = ${JSON.stringify(cardCss)};\n`);
   // Our private project resolves unchanged distribution packages through the
   // existing installation. The source checkout and its lockfile are not edited.
   await mkdir(path.join(project, 'node_modules/@hypit'), {recursive: true});

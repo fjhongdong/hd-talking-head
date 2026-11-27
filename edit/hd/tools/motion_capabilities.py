@@ -275,7 +275,7 @@ def _load_catalog(project_root: Path) -> list[dict]:
     project = Path(project_root).resolve(strict=True)
     native_rows = motion_native_candidates(project)
     profiles = load_profiles(project, native_rows=native_rows)
-    raw = _discover_native_candidates(project, native_rows=native_rows)
+    raw = _discover_native_candidates(project, native_rows=native_rows, profiles=profiles)
     rows = {row["candidate_id"]: row for row in describe_candidates(project, raw, use="broll", profiles=profiles)}
     components = [row for row in talkcraft_candidates(project) if row['native_role'] != 'scene']
     components.extend(row for row in native_rows if row.get('role') == 'component')
@@ -654,6 +654,8 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                             checked.get("dependency_id") != "lemo-opuscar"
                             or row["template_id"] != "lemo-opuscar/" + checked["style_slug"]):
                         raise ValueError("Lemo brief style differs from the selected template")
+                    if row.get("dependency_id") == "onetake" and checked.get("dependency_id") != "onetake":
+                        raise ValueError("OneTake brief differs from the selected native route")
                     if row.get('dependency_id') == 'useanimations' and (
                             checked['template_id'] != row['template_id']
                             or checked['composition']['alpha'] is not True):
@@ -833,10 +835,11 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
             entry_cited = image_cited and (not brief.get("native_result") or any(
                 ref.get("path") == brief["native_result"]["entry"]["job_path"] and "quote" in ref
                 for ref in refs if isinstance(ref, dict)))
-        lemo_sources = ({f["job_path"] for f in brief["files"]
-                         if Path(f["scene_path"]).suffix in {".html", ".js", ".mjs"}}
-                        if row.get("dependency_id") == "lemo-opuscar" else set())
-        cited_lemo_sources = set()
+        authored_sources = ({f["job_path"] for f in brief["files"]
+                             if Path(f["scene_path"]).suffix in {".html", ".js", ".mjs"}
+                             and not (row["dependency_id"] == "onetake" and f["scene_path"] == "motion.js")}
+                            if row.get("dependency_id") in {"lemo-opuscar", "onetake"} else set())
+        cited_authored_sources = set()
         for ref in refs:
             if not isinstance(ref, dict) or set(ref) not in (
                 {"path", "sha256", "pointer", "value"}, {"path", "sha256", "quote"},
@@ -873,10 +876,10 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                     raise ValueError("scene excerpt differs from frozen content")
             if path == brief.get("entry", {}).get("job_path") and row.get("dependency_id") != "lemo-wake":
                 entry_cited = True
-            if path in lemo_sources and "quote" in ref:
-                cited_lemo_sources.add(path)
-        if lemo_sources:
-            entry_cited = cited_lemo_sources == lemo_sources
+            if path in authored_sources and "quote" in ref:
+                cited_authored_sources.add(path)
+        if authored_sources:
+            entry_cited = cited_authored_sources == authored_sources
         if not entry_cited:
             raise ValueError("creative Skill requires evidence from its actual frozen scene")
         return {"status": assessment["verdict"], "judged_by": "host", "binding_verified": True,

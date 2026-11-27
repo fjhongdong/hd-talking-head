@@ -45,6 +45,47 @@ def subtitle_plan():
 
 
 class AuditVisualCoverageTests(unittest.TestCase):
+    def test_pacing_counts_stable_frames_and_portrait_overlay_gaps(self):
+        from edit.hd.tools import visual_coverage
+
+        def clip(sid, start, end, family, **kwargs):
+            return segment(sid, start / 24, end / 24, family, **kwargs)
+
+        before = clip("b02", 0, 28, "single_full_frame")
+        before["visual_strategy"]["composition"]["avatar"] = {
+            "entrance": {"frames": 12}, "exit": {"frames": 8}
+        }
+        overlay = clip("o03", 36, 59, "aroll_with_overlay", intent="同一段故事中的三维贴片")
+        after = clip("b04", 68, 116, "single_full_frame")
+        plan = {"duration": after["end"], "segments": [
+            before, clip("gap-a", 28, 36, "no_broll"), overlay,
+            clip("gap-b", 59, 68, "no_broll"), after,
+        ]}
+        pacing = visual_coverage.require_density(plan)["pacing_issues"]
+        self.assertIn("b02: only 8 stable frames", pacing[0])
+        self.assertIn("b02 → b04", pacing[1])
+        self.assertIn("(8/9 frames)", pacing[1])
+
+        keep_full_frame = {"broll_gap_reasons": [{
+            "start": before["end"], "end": after["start"], "reason": "保留原片真人完整手势"
+        }]}
+        self.assertEqual(visual_coverage.require_density(plan, treatment=keep_full_frame)["pacing_issues"],
+                         pacing[:1])
+
+        before["end"] = after["start"]
+        before["visual_strategy"]["composition"]["avatar"].pop("exit")
+        plan["segments"] = [before, after]
+        self.assertEqual(visual_coverage.require_density(plan)["pacing_issues"], [])
+
+    def test_pacing_flags_short_text_overlay_but_allows_quick_nonverbal_cue(self):
+        overlay = segment("overlay", 0, 23 / 24, "aroll_with_overlay", intent="反馈")
+        plan = {"duration": overlay["end"], "segments": [overlay]}
+        self.assertEqual(audit_module.audit(plan, subtitle_plan())["pacing_issues"], [])
+        overlay["visible_text"] = ["关键结论"]
+        self.assertIn("only 23 stable frames", audit_module.audit(plan, subtitle_plan())["pacing_issues"][0])
+        overlay["end"] = plan["duration"] = 1
+        self.assertEqual(audit_module.audit(plan, subtitle_plan())["pacing_issues"], [])
+
     def test_runtime_and_cli_report_semantic_ratio_without_a_floor(self):
         from edit.hd.tools import visual_coverage
         duration = 34.958

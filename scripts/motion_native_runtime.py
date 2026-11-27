@@ -18,14 +18,14 @@ PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('
             'mg-styles-15': ('puppeteer-core', '25.12.0'), 'video-shotcraft': ('remotion', '4.0.484')}
 HUASHU_PACKAGES = {'playwright': '1.64.0', 'Pillow': '11.3.0', 'numpy': '2.5.4'}
 SOURCE_RENDERERS = {
-    'bb-video': 'a21025a19d382b066ff354d877919be9d6863f97',
+    'bb-video': '0b6e90e20cac5d64d55049dbc618abf9b3f87481',
     'cinecode': 'c8a3e7552699360a2b0142c9620882af2069eedb',
 }
 
 
 def renderer_version(dependency_id):
     if dependency_id == 'huashu-art-motion':
-        return 'huashu-art-motion-8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c-playwright-1.64.0'
+        return 'huashu-art-motion-a97c45018d46e950d56d61981138e08f4e092909-playwright-1.64.0'
     if dependency_id in SOURCE_RENDERERS:
         return f'{dependency_id}-{SOURCE_RENDERERS[dependency_id]}'
     return '-'.join(PACKAGES[dependency_id])

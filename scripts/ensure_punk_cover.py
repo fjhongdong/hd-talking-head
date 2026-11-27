@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 REPO_URL = "https://github.com/adrianpunk/Punk-Skill.git"
-PINNED_COMMIT = "c9ad7a3745e07060c50270141efed418a0cd04d6"
+PINNED_COMMIT = "15b816cea5dcc7a3b028561d34604246369939b0"
 REQUIRED_FILES = (
     "skills/punk-cover/SKILL.md",
     "skills/punk-cover/references/style-catalog.md",

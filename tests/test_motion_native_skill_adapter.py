@@ -544,7 +544,8 @@ class NativeMotionTests(unittest.TestCase):
                 'bindings':{cid:{'dependency_id':b['dependency_id'],'brief_sha256':native.sha(request)}}}]}
             treatment={'scenes':[{'segment_id':'seg-001','component_id':cid,'brief_path':'brief.json'}],
                 'semantic_lists':{'overlay':[{'row_id':'semantic-1','quote':b['task_source']['quote'],
-                    'semantic':b['task_source']['semantic'],'components':[{'segment_id':'seg-001','component_id':cid}]}]},
+                    'semantic':b['task_source']['semantic'],'components':[{'segment_id':'seg-001','component_id':cid,
+                        'timing':{'action_start_frame':0,'settled_frame':12,'visible_until_frame':24}}]}]},
                 'skill_selection':{'overlay_beats':[{'segment_id':'seg-001','component_id':cid,'semantic_row_id':'semantic-1',
                     'required_change':b['task_source']['required_change'],'component_brief':b['task_source']['component_brief']}]}}
             with mock.patch.object(run_stage,'_module',return_value=native),mock.patch.object(native,'_inputs'), \

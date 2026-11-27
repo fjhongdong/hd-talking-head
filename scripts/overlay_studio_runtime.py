@@ -11,7 +11,7 @@ import shutil
 import subprocess
 from adapter_kit import identity_from_digests, sha256_file as sha
 
-SOURCE_PIN = "e35e1aff9dae3b3addc21f68f3bcd51f95bdc1a8"
+SOURCE_PIN = "8ce89d410af6ce648e1658eadf57fec15a612d62"
 SYSTEM_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 
@@ -20,15 +20,10 @@ SYSTEM_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 def check_runtime(project_root, tools=None):
     project = Path(project_root).resolve(strict=True)
     vendor = project / "vendor/overlay-studio"
-    runtime = project / "runtime/overlay-studio-e35e1aff"
-    result = subprocess.run(["/usr/bin/git", "rev-parse", "--show-toplevel", "HEAD"],
-                            cwd=vendor, capture_output=True, text=True, check=True, timeout=15)
-    if result.stdout.splitlines() != [str(vendor), SOURCE_PIN]:
-        raise ValueError("Overlay Studio source revision or repository root changed")
-    result = subprocess.run(["/usr/bin/git", "status", "--porcelain"], cwd=vendor,
-                            capture_output=True, text=True, check=True, timeout=15)
-    if result.stdout.strip():
-        raise ValueError("Overlay Studio source is modified; stopped without repair")
+    runtime = project / "runtime/overlay-studio-8ce89d41"
+    from prepare_sources import bundled_source_revision
+    if bundled_source_revision(project, vendor) != SOURCE_PIN:
+        raise ValueError("Overlay Studio source revision changed")
     for name in ("package.json", "package-lock.json"):
         if sha(runtime / name) != sha(vendor / "motion-playground" / name):
             raise ValueError("Overlay Studio runtime lock differs from native source")
@@ -64,7 +59,7 @@ def check_runtime(project_root, tools=None):
 def prepare_runtime(project_root):
     project = Path(project_root).resolve(strict=True)
     vendor = project / "vendor/overlay-studio"
-    runtime = project / "runtime/overlay-studio-e35e1aff"
+    runtime = project / "runtime/overlay-studio-8ce89d41"
     source = vendor / "motion-playground"
     runtime.mkdir(parents=True, exist_ok=True)
     for name in ("package.json", "package-lock.json"):

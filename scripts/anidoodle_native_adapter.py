@@ -32,8 +32,8 @@ PROJECT = SKILL
 ENTRY = 'scripts/anidoodle_native_adapter.py'
 DEPENDENCY_ID = 'anidoodle'
 VERSION = '1.0.0'
-COMMIT = '9c20e77467be393e54c7193611eeec2f7bfb8cc7'
-SOURCE_SHA256 = '97149844971ed89f0fd9f0ddd3d43edde664eb65a51f1b82ae82b7f70bc0292f'
+COMMIT = '4ae27d2c281fcfd01bce87ab13dc5ad4df81a795'
+SOURCE_SHA256 = 'e47710306d821d16e25acd1f576e06aec5542779c976728ece6793eb95db47e9'
 
 
 def source_root(project=PROJECT, *, dependency_id=DEPENDENCY_ID):

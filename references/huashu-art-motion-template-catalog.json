@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "channel": "huashu-art-motion",
-  "repository_commit": "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c",
+  "repository_commit": "a97c45018d46e950d56d61981138e08f4e092909",
   "counting_rule": "43 current portrait production templates: 8 native grammars + 35 existing style recipes. The independent fixed-landscape SVG style, 17 research recipes and generic scene workflow remain source-only. Output uses never multiply template identities.",
   "native_paths": [
     {

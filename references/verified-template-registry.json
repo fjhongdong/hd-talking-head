@@ -179,7 +179,7 @@
       }
     },
     {
-      "adaptation_level": "tokens_only",
+      "adaptation_level": "content_reflow",
       "artifact_contract": {
         "codec": "h264",
         "duration_max_sec": 14,
@@ -236,7 +236,7 @@
         "project": "hyperframes",
         "repository": "https://github.com/heygen-com/hyperframes.git"
       },
-      "verification_id": "1a7d02b4c4b7a2c99b13c98acdd89a35120b6c2bdad694715f56a8febeb9ce04",
+      "verification_id": "e30bbcb2f9bb9091cee718662f312ef7a6bd5024a4ee55495996e7f4b5e86c39",
       "visual_qa": {
         "checks": {
           "balanced_layout": true,
@@ -272,8 +272,8 @@
       },
       "execution_qa": {
         "status": "reviewed",
-        "reviewed_at": "2026-10-17T03:24:18.765240+00:00",
-        "reviewer": "Codex native pixel and invocation review; not production-film user acceptance",
+        "reviewed_at": "2026-11-26T23:34:53.671480+00:00",
+        "reviewer": "Codex real execution and six rendered frames; synthetic inputs, not user acceptance",
         "content_paths": [
           "/props/data/notifTitle",
           "/props/data/messages",
@@ -284,83 +284,83 @@
           "/props/data/brandLogo"
         ],
         "source_registry": {
-          "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source-registry.json",
-          "sha256": "e78237b42f7f0fce8678e48307c7459bce04351881a569618767f5bb943e44e6"
+          "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/source-registry.json",
+          "sha256": "8995b499415dc5599e8b8ed27ed6343b68e6199f6274417a6017189a6d9d332c"
         },
         "cases": [
           {
             "brief": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/brief.json",
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/brief.json",
               "sha256": "b9c6ce3e3f5dfeb46253a701efd2b4aa62b289d447ae37200a321f59eb9bd3a7"
             },
             "recipe": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/recipe.json",
-              "sha256": "fcad83a8509b119f5e59e9fc211fa7a2d26f098c4dc11074aa7489d225f0d87d"
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/recipe.json",
+              "sha256": "a5b8cee4074e9f824b47dd9d6377b2c46ae4e8a4fe860decb3008bbd7a09bf44"
             },
             "receipt": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/execution.json",
-              "sha256": "15715a468220714a4f7a285553df0a3cb41d796442258790a3c06ce90ab63af0"
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/execution.json",
+              "sha256": "a89f15498fcfe2924d79f1c827259eea1c89111467816f5870aecb93703ace41"
             },
             "sample": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/sample.mp4",
-              "sha256": "e33af28ae142556b7068942c88684ea229bc08bf7078da1b08e5c5bf5686e5d8"
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/sample.mp4",
+              "sha256": "1d46680c575ce474827e0b28bcc1dfc134b95832249dfd7edf015887135041a6"
             },
             "frame_evidence": [
               {
                 "role": "entry",
                 "timestamp_sec": 2.5416666666666665,
-                "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/frames-exact/entry.png",
-                "sha256": "ed04a197e5966cdf63943ebe35dca3d61cf10ad03c51859813985b8d31b2442a"
+                "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/frames-exact/entry.png",
+                "sha256": "9451f20645bb7ba71cd10684c8256148cdf0ef85a495a1b6471141db41020d0c"
               },
               {
                 "role": "stable",
                 "timestamp_sec": 8.75,
-                "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/frames-exact/stable.png",
-                "sha256": "35d111f087dc90461d703ada2f7ebc41b4b65d860d77864890009536a290ffb0"
+                "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/frames-exact/stable.png",
+                "sha256": "5d241caf341416b4aab3cb15b7668c801bf4d959e693661ec3056ed6feb9189c"
               },
               {
                 "role": "exit",
                 "timestamp_sec": 12.791666666666666,
-                "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-1/frames-exact/exit.png",
-                "sha256": "b77346716ba63a48693f009d98ec90809d3e4aa59d4d20421b8ebd62f25e047f"
+                "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-1/frames-exact/exit.png",
+                "sha256": "b2529b8ef4ac011937a4003b9cababca294a29d971b4a729ea7168c33052f0a7"
               }
             ]
           },
           {
             "brief": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/brief.json",
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/brief.json",
               "sha256": "a61187a9752d20e96687c9661b02939d9168a427c87000f948ee95abcce91ad0"
             },
             "recipe": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/recipe.json",
-              "sha256": "d9420841f3cd2420ab250b68a56904387a1e326ffcecbd3633ae70fb6c234e83"
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/recipe.json",
+              "sha256": "fd27eb752eeb0b6e37f0672842b073985bf0f4a77098d006df97ff8d189fe1c8"
             },
             "receipt": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/execution.json",
-              "sha256": "14edaf335c552beef8f36c3293beee368d87ec5a332a13fca67b8fa29c260446"
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/execution.json",
+              "sha256": "20145bdddf2866699324721af5d918d6b25c5657ba9410bd16ffa9c3b9f4066b"
             },
             "sample": {
-              "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/sample.mp4",
-              "sha256": "42da22320746aee8af395717c627102bffdb1d723f36424e0ba731d9db2e4f75"
+              "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/sample.mp4",
+              "sha256": "687d51ff4aee76748060ab5cd24c1cba915feafeba6b77526dc30207da50c821"
             },
             "frame_evidence": [
               {
                 "role": "entry",
-                "timestamp_sec": 1.7916666666666667,
-                "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/frames-exact/entry.png",
-                "sha256": "21b0074c7a8ac4ba7aeec75c86ba1677f8448ab95e08cc323ca0623d979878b5"
+                "timestamp_sec": 2.5416666666666665,
+                "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/frames-exact/entry.png",
+                "sha256": "3cc6d47e3ce7621185ed881006e460c8dd25234236c8c4fb32d0fee34dbd0be6"
               },
               {
                 "role": "stable",
                 "timestamp_sec": 8.75,
-                "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/frames-exact/stable.png",
-                "sha256": "bd360b74ad8806b81889aa3f8547c0f1243e723cc6b9da3e379c3eaf35ebbe79"
+                "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/frames-exact/stable.png",
+                "sha256": "480efff649b5734bad7751969f6d3d7d800b7dc09f91ea8b2d689bea2f56e3d4"
               },
               {
                 "role": "exit",
-                "timestamp_sec": 13.958333333333334,
-                "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/case-2/frames-exact/exit.png",
-                "sha256": "dbfd20dd612d25754a727abcdb4eb7b7584939904dfcb6ff9cf5b939f3981b47"
+                "timestamp_sec": 12.791666666666666,
+                "path": "assets/verified-templates/hyperframes/notification-cascade/reflow-qualification-vf2g8c04/qualification/case-2/frames-exact/exit.png",
+                "sha256": "168e0fca14dcb44c29aa6d58d8ee9b7a21d2b682590fb7b0b5d53bdb194d15dd"
               }
             ]
           }

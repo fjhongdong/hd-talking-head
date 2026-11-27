@@ -195,8 +195,7 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 | --- | --- | --- |
 | `system-package` | 使用当前系统包管理器安装准确 package；同一 `group` 只安装一次 | 普通安装按本合同执行；需要管理员权限时停止，不自行使用 `sudo`、改 shell 配置或换包 |
 | `python-package` | 使用 `project_python.py --prepare` 为已选 Python 安装登记的必需包 | 自动补齐缺包到项目 runtime；不改全局解释器或自动更换 Python 环境 |
-| `skill-installer` | 使用当前 Agent 环境的 Skill 安装能力，从登记 source 安装 | 只安装报告中的 Skill；安装后验证 `SKILL.md` 可发现 |
-| `git-clone` | 将登记 source 克隆到准确 destination | 只处理缺失目录；目标已存在但不合格时报告冲突，不覆盖、删除或 reset |
+| `project-local-clone` | 从登记的官方来源安装到相对于项目根的 `vendor/` 目录 | 只处理缺失目录。已有来源通过[第三方来源更新](release-contract.md#第三方来源更新)统一维护 |
 | `plugin` | 使用当前平台插件管理器安装用户已选插件 | 先取得本 Job 明确批准；账号与连接步骤由用户完成 |
 
 安装失败后停止该安装组，保留命令、退出码和简要错误信息；不自动换镜像、换包、换插件或重试。修正后只复检受影响依赖。

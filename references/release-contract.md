@@ -27,13 +27,13 @@ python3 <skill>/scripts/verify_broll_template.py
 
 当前 `visual_direction=ready` 且已有本期真实整表授权时，纯技术的同根修复先直接执行受控迁移的 `--dry-run`，精确列出 `--allowed-module`，通过后执行同一迁移；不要先 `revise` 清掉确认单。脚本必须实际校验现有授权、保持 workflow 与确认来源不变，并在现有 migration audit 的 reason 中绑定保留的授权 receipt 身份；无有效授权或模块不符时拒绝。随后刷新本 Job 预检与原 setup 确认，不产生新用户授权，也不重发已完成的生成或原生调用。
 
-运行时绑定合成器 contract、实际 Python 及 `edit/hd/tools` 下 Python 源码哈希。不同工作树即使都叫 full-v2，也不能视为同一实现。长驻进程已导入另一项目时改用新进程，不删除 `sys.modules` 后混用旧对象。记录版本不等于证明全部视觉要求已满足，正式 canary 仍须验收。缺 `runtime`/启动批准时停止，不重签上下文假装无变化。旧目录原有 Job 不适用续做。
+运行时绑定合成器 contract、实际 Python 及 `edit/hd/tools` 下 Python 源码哈希。不同工作树按实际源码身份识别。长驻进程已导入另一项目时改用新进程。生产交付按[阶段合同](stage-contracts.md#制作交付与状态)，接入验证按[模板资格](template-qualification.md)。缺 `runtime` 或启动批准时停止。旧目录原有 Job 不适用续做。
 
 `initialization.json` 保留创建时的身份，不随上下文迁移改写。资料入口在项目和 runtime 均未改变时，按正式迁移审计的上下文摘要链证明 release-only 变化；连续迁移也逐步核验，不按时间或版本名称猜测。首个上下文的摘要使用初始化器的精确写入格式，其余使用迁移器的统一格式。断链、歧义、非本 Job 或未经证明的 runtime 变化仍停止。
 
 可向其他 Agent 这样交接：
 
-> 阅读 `<skill>/SKILL.md`，执行 `hd-talking-head`。项目运行时在 `<project>`；原视频为 `<video>`，文案为 `<script>`。先校验完整包及依赖，确认本任务模型配置。按唯一 Job 和结果确认策略推进：配置与封面前半段按既有确认门执行；剪后语义分析形成完整视觉路由表，用户确认整表后由宿主内部 QA 自动完成后续制作与交付；不静默替换模板、字体、文案或模型。
+> 阅读 `<skill>/SKILL.md`，执行 `hd-talking-head`。项目运行时在 `<project>`，原视频为 `<video>`，文案为 `<script>`。先校验包和所需依赖，沿用本期已确认的模型。按唯一流程展示完整清单与生成费用，确认后连续制作并交片。使用已确认的素材、渠道、模板、文案与时窗。
 
 尖括号均替换为当前机器的真实绝对路径，不能照抄为参数。密钥交给宿主的安全配置渠道，不写入 Skill、发布清单或交接消息。
 
@@ -57,6 +57,12 @@ python3 <skill>/scripts/verify_broll_template.py
 - 支持 `segment-inputs` 的合成器提供 [跨视觉计划的片段字节复用](visual-revision-reuse.md)。新 manifest 固定逐段输入指纹及正式/canary 复用清单，旧批准证据和当前输入均须校验。整计划批准仍由父 manifest 绑定，不能因为片段 identity 不再包含整计划 SHA 就跳过批准或伪造新版 manifest。媒体复用不保留下游人工批准；旧 renderer 产物不自动迁移。
 
 ## 维护与发布
+
+### 第三方来源更新
+
+第三方 Skill 在项目内统一安装到 `vendor/`。启动新 Job 时用 `python3.12 run.py vendor_status` 将包内版本与官方默认分支的最新提交比较。也可以指定目录名，例如 `python3.12 run.py vendor_status talkcraft`。结果会标明有新版、来源版本未登记或无法访问上游。
+
+本期使用的来源有新版时，在同一 `vendor/` 目录更新实际执行的源码，并同步该来源的适配、归档、版本记录与依赖锁。沿当前原生入口核对改动后发布新的本地 Skill，由新 Job 绑定该次版本。上游更改了实际接口时，先完成新版接入，再用于新 Job。历史 Job 和已交片文件保留各自的身份。
 
 1. 只在唯一主版本维护，保留用户其他修改。回滚依靠版本控制或使用路径之外的可恢复文件；不在项目、工作树、Skill 发现目录中留下旧包、备份或第二份执行说明。登记所需的原始证据和 Job 事务恢复文件不是过期备份，不随文档清理删除。
 2. 先写能复现问题的失败用例，再修复规则、脚本和直接相关接口。规则写入文档不等于机器 gate 已实现，报告时分别说明。

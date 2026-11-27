@@ -11,6 +11,10 @@ Compile the prompt in the resolved language mode (`Chinese`, `English`, or
 supporting text must use that mode. Preserve the user's original title and
 proper nouns unless translation was explicitly requested.
 
+## Text-free compilation
+
+If the selected `META.md` declares `text_policy: none`, the structure below is conditional: omit title hierarchy, title legibility requirements, image-text fusion, typography rules, supporting labels, and the "missing title" negative constraint. Replace them with an explicit prohibition on all visible text, letters, logos, and watermarks. Treat the topic and core meaning as semantic input only, and judge the final cover by its visual metaphor. Do not leave contradictory title instructions anywhere in the compiled prompt. Retain composition, ratio resolution, material, color, and single-image output rules.
+
 ## Required Final Prompt Structure
 
 ```text

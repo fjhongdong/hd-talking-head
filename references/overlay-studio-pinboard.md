@@ -5,7 +5,7 @@
 ## 接入身份
 
 - 上游 Skill：项目内 `vendor/overlay-studio/.agents/skills/overlay-fx-generator/SKILL.md`
-- 固定提交：`e35e1aff9dae3b3addc21f68f3bcd51f95bdc1a8`
+- 固定提交：`8ce89d410af6ce648e1658eadf57fec15a612d62`
 - 依赖身份：`overlay-studio-native`
 - 渲染器：`OverlayStudio`，producer version `1.0.0`
 - 我方入口：`scripts/overlay_studio_adapter.py`

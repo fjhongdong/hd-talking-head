@@ -18,6 +18,7 @@ from edit.hd.tools.overlay_alignment import bind_native_clock, bind_native_slots
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / 'vendor/hyperframes'
+GSAP = ROOT / 'runtime/hyperframes-0.9.100/node_modules/gsap/dist/gsap.min.js'
 CHECKER = ROOT / 'scripts/check_native_overlay_clock.mjs'
 
 
@@ -30,7 +31,7 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
     def entry(self, name, *, bad_clip=False, old_selector=False, hidden=False, exit='fade', split=50, early=False):
         directory = self.directory / name
         (directory / 'vendor').mkdir(parents=True)
-        shutil.copyfile(SOURCE / 'skills/talking-head-recut/assets/vendor/gsap.min.js', directory / 'vendor/gsap.min.js')
+        shutil.copyfile(GSAP, directory / 'vendor/gsap.min.js')
         route = 'hyperframes/before-after-wipe'
         source = (SOURCE / 'registry/components/before-after-wipe/before-after-wipe.html').read_bytes()
         native = bind_native_slots(bind_native_clock(source, route, 4), {
@@ -85,7 +86,7 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
     def grid_entry(self, name, *, exit='none', duration=116 / 24, early=False):
         directory = self.directory / name
         (directory / 'vendor').mkdir(parents=True)
-        shutil.copyfile(SOURCE / 'skills/talking-head-recut/assets/vendor/gsap.min.js', directory / 'vendor/gsap.min.js')
+        shutil.copyfile(GSAP, directory / 'vendor/gsap.min.js')
         route = 'hyperframes/grid-card-assemble'
         source = (SOURCE / 'registry/components/grid-card-assemble/grid-card-assemble.html').read_bytes()
         native = bind_native_clock(source, route, duration)

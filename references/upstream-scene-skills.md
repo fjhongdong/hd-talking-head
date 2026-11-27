@@ -31,7 +31,7 @@
 
 ### Lemo 原生导演交接
 
-历史 `history:lemo-free-scene` 与 OneTake 记录不构成新计划准入；Lemo 当前 66 个具体 style 已按 [Lemo 接入说明](lemo-opuscar.md)逐条接通。不能仅凭调用 renderer 证明动作来自原生 Skill，仍须读取所选 STYLE、绑定 workflow 并完成真实画面验收；不修改第三方来补齐。
+新计划可使用 [Lemo 已登记风格](lemo-opuscar.md)与 OneTake 的原生连续运动场景。选中后读取原生 Skill，按本期口播制作并冻结 workflow 与实际场景。
 
 父级交给 Lemo：本句想让观众理解的关系或变化、当前批准原文和真实词锚、准确帧数/尺寸、同期圆窗及唯一字幕的避让位置、前后镜头的实际视觉语言，以及可核对的视觉质量参照。父级决定“表达什么”，不预先决定“几个同形卡片、几根箭头和一个中心圆”。多来源、比较或监测也不能默认套同一张关系图。
 
@@ -65,7 +65,7 @@
 
 ### Adu 原生对比组件
 
-新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.3.0`。新生成时桥接层复制固定提交 `4a52ae2cff542cfb0bfcf6e93e5120c55d0110cf` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线；在自有 `ENTRY.html` 同目录写入公开的 `output-signature.json`（`schema='adu-output-signature/1', enabled=false`），关闭新增装饰时码和 Logo。不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。新版原生色彩检查要求 FFmpeg 9；只绑定项目 `runtime/ffmpeg-9.0.2/bin/`，不替换系统 FFmpeg。由当前所选 Python 运行原生 `color_management.py --export-plan` 并检查通过后才允许生成；未准备时停止，不绕过门禁。
+新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.3.0`。新生成时桥接层复制固定提交 `4ae737a04107083288c02eab5c0861834fcc0364` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线；在自有 `ENTRY.html` 同目录写入公开的 `output-signature.json`（`schema='adu-output-signature/1', enabled=false`），关闭新增装饰时码和 Logo。不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。新版原生色彩检查要求 FFmpeg 9；只绑定项目 `runtime/ffmpeg-9.0.2/bin/`，不替换系统 FFmpeg。由当前所选 Python 运行原生 `color_management.py --export-plan` 并检查通过后才允许生成；未准备时停止，不绕过门禁。
 
 实际正常播放及划线出现、盖章落定和稳定状态的编码关键帧都要核对：固定划线与章字笔画须在最终合成画面中清楚分离，不能连成同色字形或让 OCR 把线识作文字。字框、字号通过不能代替逐像素和播放复核。若粘连影响理解，只用上游公开参数或允许的本期输入调整，并重新检查；无法通过公开能力解决时停下分析，不修改第三方源码、内置布局或划线机制。
 
@@ -85,9 +85,9 @@
 
 ### Hypit 原生计划对话
 
-唯一来源为 `<project>/vendor/hypit-source` 的固定提交 `0d36de9a9d17562fca0e478969b80eb1c16a7693`，发行版 `0.3.1`。选中后完整读取 `skills/hypit/SKILL.md`、其发行/本地 runtime/渲染/字体/Build 指引，以及 `examples/semantic-composition/packages/chat-scene` 的原生说明。准备使用 `ensure_visual_broll_skills.py --skill hypit-native-chat`：缺失时仅在项目本地准备固定源码、pnpm 10.33.0 冻结依赖及原生 compiled chat 包，不下载浏览器，不开生成服务。
+当前来源为 `<project>/vendor/hypit-source` 的 `e4abc8b246e72600fc186d881fa831074e1060f5`，发行版 `0.3.5`。选中后读取 `skills/hypit/SKILL.md` 及 `examples/semantic-composition/packages/chat-scene` 的原生说明。通过 `ensure_visual_broll_skills.py --skill hypit-native-chat` 准备项目内 pnpm 10.33.0、冻结依赖和原生聊天组件，复用本机浏览器。
 
-`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.2.0`、`HTMLCanvas`、`custom_fallback / structural`，源码固定为 `0d36de9a9d17562fca0e478969b80eb1c16a7693`。本项目 executor 另需该依赖的同名注册；Skill 包不包含父级运行时，不借 Adu 或其他身份执行。固定入口为 `scripts/render_hypit_native.mjs`，新生成只调用 Hypit 原生 `build` 与 `get`，不借浏览器 renderer 自写聊天动效。
+`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.3.0`、`HTMLCanvas`、`custom_fallback / structural`。`scripts/render_hypit_native.mjs` 按当前版本启动本地运行时，再调用 Hypit 原生 `build` 与 `get` 生成聊天动效。项目的排版代码负责整组摆位和气泡尺寸。
 
 输入为 `source_binding / template_request / composition`、短 `title`、2–4 项 `messages={sender,text,side,frame}`，仅适用于 `plan_change_dialogue`。每条消息最多 28 字，5–10 秒；到达帧升序，最终消息须保留原生入场及阅读时间。原生固定副标题 `A small change of plan` 保持原样，不能用于不涉及改变计划的普通通知、流程或数据图。消息出现、缩放、滚动和状态点的动作均为原生 chat-scene；独立父级 layout 只把完整 540×480 画板静态 scale(2)，放于 1080×1920 的 y=80，给圆窗与唯一字幕留空间。不改原生 HTML、CSS、setup、data 或动作。
 
@@ -95,7 +95,7 @@
 
 原生 HTML-video 即使没有 AudioTrack，也会封装一条静音 AAC；我们的交接层只复制视频流、去掉该音轨，并以 H.264 元信息写明 SAR 1:1，不重编码、不 retime、不改变动作。只关闭本次私有 runtime 与它的程序，不影响共享进程。异常目录和日志保留，停止当前路线；已完成的原生 Build 直接取回，不重做动效。
 
-当前唯一真实 Build 为 `bld_20261011T050711371Z_04E73B25A5`，原生已完成 144 帧；修正我们自己的结果接法后直接取回同一结果，没有第二次生成。开发产物为 `<project>/edit/verify/native-scene-connect-ke6PEQ/Hypit-原生计划对话样片-无声.mp4`，6 秒、1080×1920/24fps，样片对话是调用测试，不作为本期口播或用户已认可效果。未修改正式 Job、开头、贴片、封面或已验收成片。
+0.3.5 的本机调用样片通过 `build` 与 `get` 完成，Build 编号为 `bld_20261127T000004209Z_DE0FC3C040`。结果为 5 秒、1080×1920、24fps、120 帧、无声，显示两条中文消息。
 
 ### HyperFrames 原生聊天与屏幕流程
 
@@ -136,12 +136,12 @@ Adu/Hypit 均提供 `create_existing_adapter(project_root, node_executable, brie
 
 `ai-promo-video-maker` 固定核对提交 `279ba5178c3c80d472b84ac2efa36c6fca33bba2`。它是宣传片制作流程，模板的 `Example.tsx` 只有三段示例文字，`anim.ts` 是底层动作工具而非口播场景库；用于本期同样要另写场景。故不登记 B-roll 入口，不借其 renderer 冒充调用，也不扩展为配音或音乐任务。
 
-共用适配器使用以下固定来源；Lemo 是当前逐风格入口，OneTake 只保留历史执行能力；新的 Adu 只使用上述原生对比组件接口：
+Lemo 与 OneTake 共用项目适配器，各自通过原生入口渲染。
 
 | dependency_id | upstream_commit | 原生入口 |
 | --- | --- | --- |
-| `lemo-opuscar` | `bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00` | `node core/render/video.mjs <scene>` |
-| `onetake` | `415758128aa45cc54340df40d8109363447f582e` | `.venv/bin/python scripts/render.py index.html` |
+| `lemo-opuscar` | `439b98af08b04400f8fd8a8dd19cd773c0c96532` | `node core/render/video.mjs <scene>` |
+| `onetake` | `4e024be4c6c696b260f39a35aee6bd56d303b679` | `runtime/onetake-python312/bin/python scripts/render.py index.html` |
 
 依赖由 `ensure_visual_broll_skills.py` 在项目本地自动准备，脚本内固定 render 包版本；Skill 新版在环境检查前按[更新规则](dependency-preflight.md#依赖-skill-更新)处理，不在渲染中联网拉取或切换。禁止全局安装和 worktree 共享。Lemo 复用项目 Chrome，不运行自动 reset/setup；OneTake 使用项目 Python 3.12。两套依赖必须同时登记到正式 executor 与 `visual_plan`，运行时不支持即停止，不能只带 Skill 文件声称跨机器可执行。
 
@@ -161,7 +161,7 @@ create_artifact_probe(ffprobe)
 
 ## Wise Motion 参数组件（接入候选）
 
-先读 `<project>/vendor/wise-motion/SKILL.md`、`REMOTION.md` 和公开内容槽说明。依赖检查／准备走 `ensure_visual_broll_skills.py --project-root <project> --skill wise-motion`；只在项目的 `runtime/wise-motion-0.1.21` 安装固定 npm 包 `wise-motion@0.1.21`、Remotion `4.0.532`、React `19.3.0`。使用随包锁文件与原生素材安装脚本，不调用自动降级安装器、不升级父级 4.0.520。Git 文档来源固定为 `ee0e33b9ee3fe6c3bf8c9c6de0711851e423a989`，运行包身份单独记录；不假定 npm 包与该提交等价。连续五卡环行明确选公开 `variantId='original'`；新版默认 `aboutlove-28` 是不同的词球场景，不能因为同名 `orbit` 就替换已批准画面。
+读取 `<project>/vendor/wise-motion/SKILL.md`、`REMOTION.md` 和公开内容槽说明。项目使用上游 `29285fb36e09d1c9bbbbb6458d804e1bdfe30259` 的源码快照，运行时使用独立发行包 `wise-motion@0.1.23`、Remotion `4.0.532`、React `19.3.0`。准备命令 `ensure_visual_broll_skills.py --project-root <project> --skill wise-motion` 按锁文件在 `runtime/wise-motion-0.1.23` 安装依赖及原生素材。连续五卡环行指定 `variantId='original'`，以保留这条路线的原生动作。
 
 当前接入候选是 `orbit` 原生主体组件：五张带图形符号的卡片连续环行，位置、侧转、深度、大小和明暗由 `catalog/effects/continuous.js` 原样提供。原生画板为 640×360，周期 6000ms、`loop=true`，公开速度为 0.5–2。循环组件按真实口播时窗持续运行，不要求台词凑足整数周期，也不冻结末态补时；非循环候选仍须保留完整原生过程。原生卡片编号只是图形编号，不代表真实任务或竞品数量。
 
@@ -183,7 +183,7 @@ create_artifact_probe(ffprobe)
 
 ## Lemo/OneTake 的 brief 与 workflow
 
-Lemo 当前使用 schema 1 的独立原生风格 brief；完整规则见 [Lemo-Opuscar 接入说明](lemo-opuscar.md)。每个风格以 `lemo-opuscar/<slug>` 作为稳定模板身份，不能把场景名冒充新模板。旧 `history:lemo-free-scene` 仅作历史排除记录，不恢复自由场景或 OneTake。
+Lemo 当前使用 schema 1 的独立原生风格 brief，见 [Lemo-Opuscar 接入说明](lemo-opuscar.md)。每个风格使用 `lemo-opuscar/<slug>`。[OneTake 接入说明](onetake-integration.md)记录 `onetake-reviewed-scene` 的原生输入与制作流程。
 
 ```text
 source_binding={aroll_sha256,segment_id,start,end}
@@ -209,7 +209,7 @@ node core/render/video.mjs <scene> --size 1080x1920 --fps 24 --workers 1 --out <
 成功必须观察 `READY`、`render` 和 `DUR`。OneTake 使用：
 
 ```bash
-.venv/bin/python scripts/render.py index.html --width 1080 --height 1920 --fps 24 --dur <秒> --workers 1 --out <output>
+<project>/runtime/onetake-python312/bin/python scripts/render.py index.html --width 1080 --height 1920 --fps 24 --dur <秒> --workers 1 --out <output>
 ```
 
 成功必须观察 `__ready`、`__seek` 和 `__meta.dur`。两者均为无声整屏输出；仅 OneTake 保留 180 度快门；不硬编码人物或配音，不自动付费。适配器只冻结 source 与依赖身份，不自行改写场景语义。

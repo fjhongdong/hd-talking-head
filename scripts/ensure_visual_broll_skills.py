@@ -15,7 +15,8 @@ import tempfile
 
 SOURCES = {
     "overlay-studio-native": {
-        "commit": "e35e1aff9dae3b3addc21f68f3bcd51f95bdc1a8",
+        "commit": "8ce89d410af6ce648e1658eadf57fec15a612d62",
+        "files_snapshot": True,
         "project_path": "vendor/overlay-studio",
         "files": (".agents/skills/overlay-fx-generator/SKILL.md",
                   "motion-playground/scripts/export-frames.mjs",
@@ -39,7 +40,8 @@ SOURCES = {
     "openfilm-motion-graphics": {"runtime": True},
     "huashu-motion": {
         "url": "https://github.com/alchaincyf/huashu-motion.git",
-        "commit": "5f2608c2e12abcf518f74dde86093b19f7f88603",
+        "commit": "f4f38bfe295a3f768753857be9236cc3277c7dad",
+        "files_snapshot": True,
         "files": ("skills/huashu-motion/SKILL.md", "skills/huashu-motion/references/talking-head.md",
                   "skills/huashu-motion/references/contract.md", "package.json", "cli/om.js",
                   "cli/lib/project.js", "cli/lib/render.js", "cli/lib/render-om.js",
@@ -49,13 +51,15 @@ SOURCES = {
     },
     "wise-motion": {
         "url": "https://github.com/WiseWong6/wise-motion.git",
-        "commit": "ee0e33b9ee3fe6c3bf8c9c6de0711851e423a989",
+        "commit": "29285fb36e09d1c9bbbbb6458d804e1bdfe30259",
+        "files_snapshot": True,
         "files": ("SKILL.md", "REMOTION.md", "references/runtime-interface.md",
                   "references/quickstart.md", "references/validation-matrix.md"),
     },
     "huashu-art-motion": {
         "url": "https://github.com/alchaincyf/huashu-art-motion.git",
-        "commit": "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c",
+        "commit": "a97c45018d46e950d56d61981138e08f4e092909",
+        "files_snapshot": True,
         "files": ("SKILL.md", "scripts/engine/render.py", "scripts/engine/clip.html",
                   "scripts/engine/clip.js", "scripts/engine/clips/y2_vox.js",
                   "scripts/engine/clips/y1_kurzgesagt.js",
@@ -64,14 +68,15 @@ SOURCES = {
     },
     "adu-motion-video": {
         "url": "https://github.com/adunext/adu-motion-video.git",
-        "commit": "4a52ae2cff542cfb0bfcf6e93e5120c55d0110cf",
+        "commit": "4ae737a04107083288c02eab5c0861834fcc0364",
+        "files_snapshot": True,
         "files": ("SKILL.md", "scripts/render_project.mjs", "scripts/output-signature.mjs", "template/index.html", "template/templates.js",
                   "scripts/chrome.mjs", "scripts/color_management.py", "package.json", "package-lock.json",
                   "template/lib.js", "template/main.js"),
     },
     "hypit-native-chat": {
         "url": "https://github.com/hypit-ai/hypit.git",
-        "commit": "0d36de9a9d17562fca0e478969b80eb1c16a7693",
+        "commit": "e4abc8b246e72600fc186d881fa831074e1060f5",
         "project_path": "vendor/hypit-source",
         "files": ("skills/hypit/SKILL.md", "bin/hypit.mjs", "package.json", "pnpm-lock.yaml",
                   "examples/semantic-composition/packages/chat-scene/src/render.ts",
@@ -80,14 +85,15 @@ SOURCES = {
     "lemo-opuscar": {
         "url": "https://github.com/lemomo-ai/lemo-opuscar.git",
         "files_snapshot": True,
-        "commit": "bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00",
+        "commit": "439b98af08b04400f8fd8a8dd19cd773c0c96532",
         "files": ("plugin/skills/lemo-opuscar/SKILL.md", "AGENTS.md",
                   "DIRECTOR.md", "TECHNIQUE.md", "styles/README.md",
                   "core/render/video.mjs", "core/lib.js", "package-lock.json"),
     },
     "onetake": {
         "url": "https://github.com/feitangyuan/onetake.git",
-        "commit": "415758128aa45cc54340df40d8109363447f582e",
+        "commit": "4e024be4c6c696b260f39a35aee6bd56d303b679",
+        "files_snapshot": True,
         "files": ("SKILL.md", "lib/motion.js", "templates/comp.html",
                   "scripts/render.py", "scripts/probe.py"),
     },
@@ -248,31 +254,15 @@ def main() -> int:
 
 def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
     """Prepare only missing local render dependencies; never run upstream auto-update setup."""
-    from upstream_scene_adapter import check_runtime, ONETAKE_PACKAGES
+    from upstream_scene_adapter import check_runtime
     root = project_root / "vendor" / skill_id
-    if skill_id == "onetake" and _git("-C", str(root), "status", "--porcelain", "--untracked-files=no"):
-        raise VisualBrollDependencyError("upstream source has local changes; runtime preparation stopped")
     try:
         if skill_id == "lemo-opuscar":
             if not (root / "node_modules/playwright-core/package.json").is_file():
                 subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root, check=True, timeout=240)
         else:
-            python = root / ".venv/bin/python"
-            if not python.exists():
-                base = shutil.which("python3.12")
-                if not base:
-                    raise VisualBrollDependencyError("Python 3.12 is required for the project render venv")
-                subprocess.run([base, "-m", "venv", str(root / ".venv")], check=True, timeout=60)
-            modules = "import playwright,numpy,scipy,PIL,matplotlib,fontTools,brotli"
-            if subprocess.run([str(python), "-c", modules], capture_output=True).returncode:
-                subprocess.run([str(python), "-m", "pip", "install",
-                    *[f"{name}=={version}" for name, version in ONETAKE_PACKAGES.items()]], check=True, timeout=240)
-            browser = subprocess.run([str(python), "-c",
-                "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); "
-                "b=p.chromium.launch(); b.close(); p.stop()"], capture_output=True)
-            if browser.returncode:
-                # Install the upstream browser, not an alternative renderer or cloud provider.
-                subprocess.run([str(python), "-m", "playwright", "install", "chromium"], check=True, timeout=240)
+            from onetake_runtime import prepare_runtime
+            prepare_runtime(project_root)
         check_runtime(project_root, skill_id)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         raise VisualBrollDependencyError(f"project-only scene runtime is unavailable: {error}") from error

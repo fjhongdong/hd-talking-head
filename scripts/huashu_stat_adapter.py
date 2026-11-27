@@ -32,6 +32,9 @@ VERSION = "1.0.0"
 TEMPLATE_ID = "huashu-motion/talking-head-stat"
 RENDERER = "HuashuMotion"
 STRUCTURE_SHA = "81acf35689e6f070145034b9254e777075f506e2255d95abde7ff0e5e039ae77"
+CARD_LAYOUT_STYLE = ('<style id="hd-stat-card-layout">'
+                     '.st .lbl .in {max-width:100%;overflow-wrap:anywhere;white-space:normal;}'
+                     '</style>')
 REUSE_REFS = {"native-mov", "native-config", "native-evidence", "native-source"}
 VARIABLES = re.compile(r"\sdata-composition-variables\s*=\s*('([^']*)'|\"([^\"]*)\")", re.I)
 
@@ -150,6 +153,9 @@ def native_variables(brief):
 
 
 def native_configuration(source):
+    if source.count(CARD_LAYOUT_STYLE) > 1:
+        raise ValueError("Native stat card layout occurs more than once")
+    source = source.replace(CARD_LAYOUT_STYLE, "", 1)
     match = VARIABLES.search(source)
     if not match:
         raise ValueError("Native stat variables missing")
@@ -318,7 +324,12 @@ def _native_export(brief, runtime, directory, run):
     pairs = [key+"="+(json.dumps(value).lower() if type(value) is bool else str(value))
              for key,value in native_variables(brief).items()]
     run("native-set", cli+["set",*pairs,str(portrait)])
-    validate_native_configuration((portrait/"index.html").read_text(), brief)
+    config = portrait/"index.html"
+    source = config.read_text()
+    validate_native_configuration(source, brief)
+    if source.count("</head>") != 1:
+        raise ValueError("Native stat document head is missing")
+    config.write_text(source.replace("</head>", CARD_LAYOUT_STYLE + "</head>", 1))
     mov = directory/"native.mov"
     run("native-render",cli+["render",str(portrait),"--transparent","--fps","24","--workers","1","--out",str(mov),"--verbose"])
     run("native-probe",[runtime["ffprobe"],"-v","error","-show_streams","-show_format","-of","json",str(mov)])

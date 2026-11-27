@@ -42,6 +42,43 @@ def require_aroll_window(visual: dict, start: float, end: float) -> list[str]:
     return selected
 
 
+def _pacing_issues(broll_segments, overlays, treatment):
+    """Check the time viewers actually see the visual and short A-roll islands."""
+    issues = []
+    for segment in [*broll_segments, *(s for s in overlays if s.get("visible_text"))]:
+        composition = segment["visual_strategy"]["composition"]
+        avatar = composition.get("avatar") or {}
+        frames = round(segment["end"] * 24) - round(segment["start"] * 24)
+        stable = frames - sum(avatar.get(key, {}).get("frames", 0) for key in ("entrance", "exit"))
+        if stable < 24:
+            issues.append(f"{segment['segment_id']}: only {stable} stable frames; "
+                          "allow at least 24 frames for the visual after transitions")
+
+    intentional = {(round(row["start"] * 24), round(row["end"] * 24))
+                   for row in (treatment or {}).get("broll_gap_reasons", [])
+                   if isinstance(row, dict) and isinstance(row.get("reason"), str)
+                   and row["reason"].strip() and type(row.get("start")) in (int, float)
+                   and type(row.get("end")) in (int, float)
+                   and math.isfinite(row["start"]) and math.isfinite(row["end"])}
+    for before, after in zip(broll_segments, broll_segments[1:]):
+        start, end = round(before["end"] * 24), round(after["start"] * 24)
+        if not 0 < end - start <= 60 or (start, end) in intentional:
+            continue
+        inside = [s for s in overlays if s["start"] >= before["end"] and s["end"] <= after["start"]]
+        if not inside:
+            if end - start < 24:
+                issues.append(f"{before['segment_id']} → {after['segment_id']}: "
+                              f"empty A-roll gap is only {end - start} frames; connect the B-roll")
+            continue
+        lead = round(min(s["start"] for s in inside) * 24) - start
+        tail = end - round(max(s["end"] for s in inside) * 24)
+        if 0 < lead < 24 and 0 < tail < 24:
+            issues.append(f"{before['segment_id']} → {after['segment_id']}: "
+                          f"A-roll with overlay is bracketed by short gaps ({lead}/{tail} frames); "
+                          "connect the visual beats without losing the overlay, or plan an intentional A-roll beat")
+    return issues
+
+
 def audit(
     visual: dict,
     subtitles: dict,
@@ -154,6 +191,7 @@ def audit(
             "intent": s["visual_intent"]["statement"],
             "spoken_text": "".join(c["text"] for c in cues if c["start"] < s["end"] and c["end"] > s["start"]),
         } for s in overlays],
+        "pacing_issues": _pacing_issues(broll_segments, overlays, treatment),
         "windows": windows,
     }
     if treatment is not None and "semantic_lists" in treatment:
@@ -176,7 +214,7 @@ def audit(
         gap_reasons = {}
         for row in (treatment or {}).get("broll_gap_reasons", []):
             if isinstance(row, dict) and isinstance(row.get("reason"), str) and row["reason"].strip():
-                gap_reasons[(round(float(row.get("start", -1), 1)), round(float(row.get("end", -1), 1)))] = row["reason"]
+                gap_reasons[(round(float(row.get("start", -1)), 1), round(float(row.get("end", -1)), 1))] = row["reason"]
         def _reasoned(interval):
             return gap_reasons.get((round(interval["start"], 1), round(interval["end"], 1)))
         if not broll_segments:

@@ -8,7 +8,7 @@ Overlay Studio 的原生 `pin-board` 是独立的 A-roll 短要点候选。它�
 
 先读取实际使用的上游 Skill。现成组件能表达本句关系时直接调用；允许 import 原生组件、使用公开 props、静态放置和 Sequence start/end 时钟，不新增主要动作、关键帧、曲线或替代时间线。不要把普通字幕放大重复一次，也不要为所有新口播硬套同一张示意图。
 
-台词含一个确切数值时，可按[Huashu 原生数值贴片](huashu-stat-overlay.md)选 `huashu-motion/talking-head-stat`。其语义登记是 `numeric_emphasis / huashu-stat / native_count_up / single-metric`，仅用于 `aroll_with_overlay`；不把“一条思路”等泛指改成事实数字，也不替换 B-roll。此路线有独立的原生计数时钟与来源检查，不套用其他组件的 0.8 秒容差。当前已有测试数值的视觉样片、MOV 复用和新数值原生生成封装的执行证据；真实数字口播按用户决定留到下一条，首次实际使用仍须经过原有 canary，不能写成已经通过生产验收。
+台词含一个确切数值时，可按[Huashu 原生数值贴片](huashu-stat-overlay.md)选 `huashu-motion/talking-head-stat`。其语义登记是 `numeric_emphasis / huashu-stat / native_count_up / single-metric`，用途为 `aroll_with_overlay`。数值以本期真实原话为准。此路线有独立的原生计数时钟与来源检查，规格见专用合同。
 
 仅优化 A-roll 贴片时，保留原有 B-roll 的内容、位置、时长及来源绑定。代表样片先用 `audit_visual_coverage.require_aroll_window(approved_visual_plan, start, end)` 对照原已批准计划，只有原有 `mode=none` 的 A-roll 窗口才可继续准备和渲染；不能先把 B-roll 改标为 A-roll 再检查，也不能从被 B-roll 覆盖的原始 A-roll 取样来代替该处成片。样片若需包含相邻 B-roll 作上下文，直接复用其原产物，不重做、不覆盖。开发样片和已验收整片分开保存，不能把这种选段错误算作贴片验收通过。
 
@@ -43,7 +43,7 @@ Overlay Studio 的原生 `pin-board` 是独立的 A-roll 短要点候选。它�
 `notification-stack` 不显示正文时，显式传入公开 `bodies` 逗号列表中的空项，例如单条通知用 `bodies: ","`。省略此字段或传空字符串会触发上游英文示例正文；词锚检查通过仍须检查实际卡片，不能把默认示例带进成片。父级静态摆放按本次原生画布和真人安全区检查，旧片的负 y 偏移或缩放值不能直接当作可用布局；确认卡片全边界和最终计算后的字号，再复用该产物。
 
 
-补充贴片的样片通过后，必须立即更新当前正式 director 的对应组件、原生 brief/source binding 和 `manifests/confirmed-content.json`；详见[视觉修订的保留检查](visual-revision-reuse.md#已确认内容的保留检查)。后续只修改开头、剪切或 B-roll 时，贴片默认保留并按词锚重绑定，不再从早期无贴片计划覆盖。保留记录有而正式计划没有的贴片，正式入口直接报错。
+新增且经用户确认的贴片进入当前正式 director 的对应组件、原生 brief/source binding 和 `manifests/confirmed-content.json`。后续返修按[视觉修订的保留检查](visual-revision-reuse.md#已确认内容的保留检查)保留或重绑定该项。
 
 同风格三节点流程直接调用上述 HyperFrames 入口。双项对比改选真正支持对比的现成组件；不通过删除箭头或另写原语状态转场改造成新动效。真实口播窗口允许 3–15 秒，不为凑时长延长镜头。下列 TalkCraft 原语关系是历史结构适配记录，不进入新选型；已有确认内容保留，不回退旧大面板或越界节点。
 
@@ -74,8 +74,8 @@ brief 包含 `schema_version=1`、`source_binding` 与 `renderer_input`：
 - `source_binding` 为 `aroll_sha256 / segment_id / start / end`，逐项对照当前批准 VisualPlan 和真实 A-roll 文件；start/end 是剪辑后 A-roll 的区间，原片区间另由本 Job 时间映射绑定，不重复减偏移。
 - `renderer_input` 包含版本、`canvas`（1080×1920、24fps、当前段帧数）、与关系类型相符的 `labels` 和 `timing`。标签为当前内容批准的 1–4 个可见字符。
 - timing 是组件局部秒数，分别绑定入场、点线绘制、标准移动和退场；不能机械复制历史样片秒数。`exit` 是淡出终点，之后必须全透明；段落比动画长时仅保留透明尾部，不拉长动作。
-- 每个贴片在制作前记录可在本 Job 的 Scribe 词表中逐字定位的口播锚点、该词的剪后时间、贴片要解释的关系，以及入场／变化／退场分别响应的词。入场不得早于关系被说出；关键图形变化落在对应词发声附近，下一语义主题开始前退场。计划的 `start/end`、组件局部 timing 与字幕 cue 必须在同一剪后时钟逐项对照；抽查实际片段的入场、关键变化和退场，不能只凭 brief 的英文意图推断时机正确。
-- 多节点贴片优先给每个标签分别绑定 `label_times`，不要用等间隔 `step` 代替实际口播停顿。深色字所在的亮色结果框必须先完成填色，再显示文字；在真实 A-roll 上抽查中间帧，不能只看最终定格。
+- 每个贴片在制作前记录本 Job 词表中可定位的口播锚点、剪后时间和贴片关系。用同一剪后时钟安排 `start/end`、组件局部 timing 和字幕 cue。入场跟随关系开口，关键变化落在对应词附近，退出衔接下一话题。
+- 多节点贴片按标签实际词锚绑定 `label_times`。深色字在亮色结果框完成填色后出现，排版以本段实际 A-roll 为底图。
 - 新增贴片的视觉分段起止也要落在整词边界或真实停顿，不能因方便安排动画把字幕词语拆开，例如“假｜期”。先调整分段位置，再把原生动作的局部时钟对齐原声词锚；不改原声、不手改已发布字幕来掩盖错误。
 - 贴片按完整画布原坐标合成，不缩放到 B-roll 容器。安全区外不承载有效信息；当前适配图形位于画面上方，字幕位置不变。更换位置、关系、样式或文案容量须重新验收。
 

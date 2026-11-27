@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 
-RUNTIME_DIRECTORY = 'runtime/talkcraft-native-ccb8a571'
+RUNTIME_DIRECTORY = 'runtime/talkcraft-native'
 
 
 def _sha(path):

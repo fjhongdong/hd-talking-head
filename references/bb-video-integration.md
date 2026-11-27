@@ -1,12 +1,12 @@
 # BB Video 完整原生接入
 
-渠道 `bb-video` 固定上游 `BubbleBrainBB/BB-Video` 的提交 `a21025a19d382b066ff354d877919be9d6863f97`。完整仓库原样保存在 `vendor/bb-video`，包含 Skill、30 个原生风格、runtime、starter、资源与官方示例；不修改、抽取或重写第三方实现。来源记录为 `bb-video-native-source.json`，模板入口为 `bb-video-template-catalog.json`，语义标签继续由统一 `motion-capability-index.json` 管理。
+渠道 `bb-video` 固定上游 `BubbleBrainBB/BB-Video` 的提交 `0b6e90e20cac5d64d55049dbc618abf9b3f87481`。完整仓库原样保存在 `vendor/bb-video`，包含 Skill、37 个原生风格、runtime、starter、资源与官方示例；不修改、抽取或重写第三方实现。来源记录为 `bb-video-native-source.json`，模板入口为 `bb-video-template-catalog.json`，语义标签继续由统一 `motion-capability-index.json` 管理。
 
 ## 身份和选型
 
-统一为一个渠道、30 个原生风格模板，模板身份 `bb-video/<style>`。explainer／promo、quick／手写工程、组件动词、主题和本期项目都不增加模板数量。模板之间不另设固定优先级；选库时的美观评估不改变[统一的一次匹配与联合分配](native-motion-call-contract.md#身份与一次匹配)。贴片和 B-roll 仍各自从语义规划，分配后再检查时长。
+当前登记一个渠道、37 个原生风格模板，模板身份 `bb-video/<style>`。explainer／promo、quick／手写工程、组件动词、主题和本期项目都不增加模板数量。模板之间不另设固定优先级；选库时的美观评估不改变[统一的一次匹配与联合分配](native-motion-call-contract.md#身份与一次匹配)。贴片和 B-roll 仍各自从语义规划，分配后再检查时长。
 
-本渠道原生视频不含 alpha，仅进入不透明 B-roll 候选，不进入真人透明贴片。各风格按原生用途及素材条件匹配；例如 `parable` 的 15–45 秒完整叙事要求不能靠截出几秒规避。其他风格的示例片长不作为统一最低时长。
+本渠道原生视频不含 alpha，仅进入不透明 B-roll 候选，不进入真人透明贴片。各风格按原生用途及素材条件匹配；例如 `parable` 的 15–45 秒完整叙事要求不能靠截出几秒规避。其他风格的示例片长不作为统一最低时长。`supercut` 仅提供 promo 手写流程，需要已授权的真实照片或视频及来源记录；`cutaway` 使用 Three.js，`watercolour` 使用 WebGL2，实际制作前检查对应环境。
 
 ## 完整原生创作
 
@@ -42,6 +42,6 @@
 
 BB 使用 Node 内建 WebSocket 和原生 Chrome CDP，无 npm 运行依赖。沿现有 `motion_native_runtime.py --project-root <project> --dependency-id bb-video` 检查 Node ≥22.4、真实 Chrome、FFmpeg 和 FFprobe，传递实际 `CHROME_PATH`；不伪造 package-lock，不安装 Puppeteer，不改变全局环境。字体及部分可选三维库仍可能联网，不能据此宣称离线；原生字体和资源检查照常执行。
 
-完整源码的分发正本在 `archives/sources/index.json` 对应的 `bb-video.source.part-*`。准备入口可从缺失目录恢复固定完整树；已有目录不覆盖。展开的 vendor 不重复打包，源记录及逐文件核验沿现有机制执行。
+完整源码的分发正本在 `archives/sources/index.json` 对应的 `bb-video-0b6e90e2.source.part-*`。准备入口可从缺失目录恢复固定完整树；已有目录不覆盖。展开的 vendor 不重复打包，源记录及逐文件核验沿现有机制执行。
 
-接入样片放完整包外。用真实口播及对应词钟，沿现有阶段派发、原生制作、结果审核冻结、正式组件消费和父级合成完成代表性验收；常规场景及画板字幕路线分别覆盖。样片是明确标记的开发夹具，不冒充用户正式视频批准，不放宽生产候选完整性或多样化规则。一条样片只证明该次调用和结果，不宣称30种风格的所有主题均已视觉通过。现有成片、旧任务和历史模板资格保持原样。
+接入样片放完整包外。用真实口播及对应词钟，沿现有阶段派发、原生制作、结果审核冻结、正式组件消费和父级合成完成代表性验收；常规场景及画板字幕路线分别覆盖。样片是明确标记的开发夹具，不冒充用户正式视频批准，不放宽生产候选完整性或多样化规则。一条样片只证明该次调用和结果，不宣称 37 种风格的所有主题均已视觉通过。现有成片、旧任务和历史模板资格保持原样。

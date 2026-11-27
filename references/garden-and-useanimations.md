@@ -4,7 +4,7 @@
 
 ## Garden Motion Showreel
 
-- [官方仓库](https://github.com/ConardLi/garden-skills/tree/2b9a89340b70f632d31c0f1c69fce94a7912423e) 固定当前已核对提交。渠道为 `garden-motion-showreel`，模板为 `garden-motion-showreel/<style>`。43 个风格来自原生 `references/styles/INDEX.md` 及对应文件。
+- [官方仓库](https://github.com/ConardLi/garden-skills/tree/f2d7adeaf53dcce3d0eb19cbffe8c04f4c636c2a) 固定当前已核对提交。渠道为 `garden-motion-showreel`，模板为 `garden-motion-showreel/<style>`。43 个风格来自原生 `references/styles/INDEX.md` 及对应文件。
 - 用于不透明整屏 B-roll。读原版 `skills/motion-showreel/SKILL.md` 和所选风格，在独立 Job 工程使用原生工作流创作。上游决定构图、材质、镜头和动作。涉及画内文案时，以最终竖屏画布中线及人物窗、字幕安全区复核，不能用三维场景原点代替可见文字位置。
 - 通过 `scripts/garden_native_adapter.py` 交接原生任务、`capture_render`、`publish_completed`。交接使用可直接读取的原生说明路径，核对已确认的语义行、原话、语义、必须发生的变化与画面任务。用上游 `render.mjs`、`inspect.mjs` 导出并检查 1080×1920、24fps、无声视频。原生渲染用单个 worker，避免多分片合并后帧率偏离 24fps。复用已完成片段时核对记录和实际文件。
 - 工程里实际渲染的素材放在 `assets/` 或对应源码目录，保留同项已授权来源或原生创作来源。`qa/`、`out/` 用于预览和导出。渲染前后核对 Job 工程文件和本地依赖，工程素材使用实文件。需要引用内容时，可以引用实际绘制画面的 HTML、JS 或其他已绑定源码。软质 3D 样片是原生风格创作示例，其余风格按本句要求创作。

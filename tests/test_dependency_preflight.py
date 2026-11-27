@@ -292,7 +292,7 @@ class DependencyPreflightTests(unittest.TestCase):
         source = json.loads((SKILL_ROOT / "references/dependency-manifest.json").read_text())
         dependency = next(item for item in source["dependencies"]
                           if item["id"] == "video-use-runtime")
-        self.assertEqual(dependency["install"]["destination"], dependency["target"])
+        self.assertEqual(dependency["install"]["destination"], "vendor/" + dependency["target"])
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             manifest = root / "dependencies.json"
@@ -310,7 +310,7 @@ class DependencyPreflightTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             report = json.loads(output.read_text())
             runtime = report["dependencies"][0]
-            self.assertEqual(runtime["resolved_path"], str(REPO_ROOT / "vendor/video-use-runtime"))
+            self.assertEqual(runtime["resolved_path"], str(REPO_ROOT / "vendor/video-use"))
             self.assertEqual(runtime["status"], "bound")
             self.assertTrue(runtime["bound"])
             self.assertTrue(runtime["callable"])

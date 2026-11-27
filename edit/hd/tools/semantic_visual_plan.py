@@ -35,6 +35,27 @@ def component_semantic_rows(treatment):
             for ref in row["components"]}
 
 
+def component_timing(row, key):
+    """Read the optional timing of one physical part of a semantic item."""
+    return next((ref.get("timing") for ref in row.get("components", ())
+                 if (ref["segment_id"], ref["component_id"]) == key), None)
+
+
+def _validate_timing(timing, segment, *, label):
+    required = {"settled_frame", "visible_until_frame"}
+    if (not isinstance(timing, dict) or not required <= set(timing)
+            or set(timing) - required - {"action_start_frame"}
+            or any(type(frame) is not int for frame in timing.values())):
+        raise SemanticVisualPlanError(f"{label}: timing needs integer edited-body frames")
+    start = round(segment["start"] * 24)
+    end = round(segment["end"] * 24)
+    settled = timing["settled_frame"]
+    if not start <= settled < timing["visible_until_frame"] <= end:
+        raise SemanticVisualPlanError(f"{label}: planned result and hold must fit the component window")
+    if "action_start_frame" in timing and not start <= timing["action_start_frame"] < settled:
+        raise SemanticVisualPlanError(f"{label}: planned action must start within the window before it settles")
+
+
 def _validate_required_content(content):
     if not isinstance(content, dict) or not content:
         raise SemanticVisualPlanError("required_content must name at least one visible requirement")
@@ -101,6 +122,8 @@ def validate_semantic_lists(treatment, director, speech=None):
                     raise SemanticVisualPlanError("semantic component reference is duplicate or orphaned")
                 local.add(key); seen_components.add(key)
                 segment, comp = components[key]
+                if "timing" in ref:
+                    _validate_timing(ref["timing"], segment, label=rid)
                 is_overlay = component_use(segment, comp) == "overlay"
                 if (typ == "overlay") != is_overlay:
                     raise SemanticVisualPlanError("semantic row type does not match real composition")

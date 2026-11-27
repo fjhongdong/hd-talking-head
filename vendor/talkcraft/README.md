@@ -4,13 +4,14 @@
 
 <h1>video-talkcraft</h1>
 
-[![Gallery](https://img.shields.io/badge/Gallery-live%20previews-7A5AF8)](https://vincentwei1021.github.io/video-talkcraft/)
+[![Gallery](https://img.shields.io/badge/Gallery-live%20previews-7A5AF8)](https://vincentwei1021.github.io/video-talkcraft/) <a href="#wechat-community"><img src="https://img.shields.io/badge/%E5%BE%AE%E4%BF%A1%E7%BE%A4-07C160?style=flat&amp;logo=wechat&amp;logoColor=white" alt="微信群" height="20"></a>
 [![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue)](LICENSE)
-[![WeChat](https://img.shields.io/badge/WeChat-%E8%AE%A8%E8%AE%BA%E7%BE%A4-07C160?logo=wechat&logoColor=white)](assets/wechat-group.jpg)
 
 **口播视频的 agent skill：字级配音同步 · 108 张动效配方卡 · 七层反 PPT 镜头系统 · 三重验收**
 
-[中文](README.md) | [English](README_EN.md)
+<a href="#support"><img src="https://img.shields.io/badge/%E2%98%95%20%E6%94%AF%E6%8C%81%E4%BD%9C%E8%80%85-16803C?style=for-the-badge" alt="☕ 支持作者" height="32"></a>
+
+[中文](README.md) | [English](README_EN.md) | [日本語](README_JA.md)
 
 </div>
 
@@ -38,7 +39,7 @@
 
 - ✂️ **配音预剪 `scripts/voice_trim.py`**——真人录音先以口播稿为真值剪掉口水词 / 结巴重说 / 过长停顿再做时间戳（只剪稿子里没有的插入段，ASR 听错的字永不剪），词表来源可选 FireRed ASR / 逐字 SRT / 词级 JSON，切点吸附帧网格、同一 EDL 可剪人物视频保音画同长（→ SKILL.md ②-0）。
 - 🫥 **工作台右键导出透明通道**——时间轨上右键任一动效片段可导出只含这一段的透明视频（MOV ProRes 4444 / WebM VP9 alpha），根底透明、自动去掉卡根层幕底与人物剪影占位，给剪映 / PR / AE 当叠加素材；右键菜单同时带分割 / 复制 / 删除（→ `workbench/GUIDE.md` ⑦）。
-- 📺 **工作台实时看板（L1）**——⑤-1 骨架搭完就接入并开着工作台：阶段栏 + 进度轨（每镜 占位 / 已实现 / 已渲 / 已过闸 / 过期 / 红点）+ 镜头视图（单镜预览 · issues · SHOTBOOK 段落）+ 实时成片卡，状态按盘上产物自动推、`scripts/pipeline_state.mjs --pass/--issue` 只补人工判定，代码半成品不再盖页（→ SKILL.md ⑤-2、`workbench/docs/live-pipeline.md`）。
+- 📺 **工作台实时看板（L1）**——⑤-1 骨架搭完就接入并开着工作台：阶段栏 + 进度轨（每镜 占位 / 已实现 / 已渲 / 已过闸 / 过期 / 红点）+ 镜头视图（单镜预览 · issues · SHOTBOOK 段落）+ 实时成片卡（2026-09-21 起单轨成片卡下线，看板即多轨），状态按盘上产物自动推、`scripts/pipeline_state.mjs --pass/--issue` 只补人工判定，代码半成品不再盖页（→ SKILL.md ⑤-2、`workbench/docs/live-pipeline.md`）。
 - 🔗 **工作台接入加固**——`kbsrc` 改按真实路径解析、契约模块缺哪个只回退哪个 stub、导出形态差异由 `src/kb/` 适配层归一：接入 skill 正式工程（`Main.tsx` + `scenes/`，无 promo 模块）不再整页 500，「拆解导入」按钮按契约自动禁用（→ `workbench/README.md`「接入口播成片工程」）。
 
 **2026-09-09**
@@ -265,6 +266,22 @@ agent 读方法论、选动效配方卡、写 [Remotion](https://www.remotion.de
 - **Pexels · Pixabay · NASA · Mixkit**——免署名素材来源。
 - **Claude Code**——本库由 AI 编码 agent 构建、迭代与验收，用的正是 skill 自己教的那套评审循环。
 
+<a id="support"></a>
+
+## ☕ 支持作者
+
+如果这个项目帮到了你，欢迎请我喝杯咖啡，支持后续开发与维护。
+
+<a href="https://ko-fi.com/vincentwei"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=6" alt="在 Ko-fi 请我喝杯咖啡" height="40"></a>
+
+海外用户可通过 Ko-fi 用银行卡或 PayPal 一次性支持；国内用户可用下方微信：
+
+<img src="assets/wechat-sponsor.jpg" alt="微信赞助收款码" width="280">
+
+微信扫一扫，金额随意。手机查看时，可保存图片，再在微信「扫一扫」中从相册选择。
+
+赞助完全自愿，Star、反馈和分享同样感谢。赞助不改变本项目现有的许可条款。
+
 ## 关注作者
 
 <p>
@@ -273,10 +290,14 @@ agent 读方法论、选动效配方卡、写 [Remotion](https://www.remotion.de
   <a href="https://x.com/VincentWei93"><img alt="在 X 关注作者" src="https://img.shields.io/badge/X-%E5%85%B3%E6%B3%A8%E6%88%91-000000?style=for-the-badge&logo=x&logoColor=white"></a>
 </p>
 
-## 微信讨论群
+<a id="wechat-community"></a>
 
-有建议、反馈或使用问题？扫码加入 video-talkcraft 交流群（2 群）：
+## 💬 微信群
 
-<img src="assets/wechat-group.jpg" alt="video-talkcraft 微信交流群二维码" width="300">
+欢迎加入「Vincent 的 AI 交流群 5」，一起交流 AI 应用、编程和视频创作。
 
-二维码更新于 2026-09-17，过期后会不定期更新；也可通过上方社媒直接联系作者。
+<a href="assets/wechat-group.png?v=5"><img src="assets/wechat-group.png?v=5" alt="Vincent 的 AI 交流群 5 微信入群二维码" width="400"></a>
+
+用微信扫一扫加入。手机查看时，可保存图片，再在微信「扫一扫」中从相册选择。
+
+此二维码在 **2026-12-02 前**有效，以微信提示为准。若已失效，可[通过 X 联系 Vincent](https://x.com/VincentWei93)获取最新入群方式。

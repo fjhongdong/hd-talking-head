@@ -83,10 +83,15 @@
       "id": "datamagic",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": ".",
       "path_type": "directory",
-      "entrypoints": ["scripts/datamagic_native_adapter.py"],
+      "entrypoints": [
+        "scripts/datamagic_native_adapter.py"
+      ],
       "binding_probes": [
         {
           "entrypoint": "scripts/datamagic_native_adapter.py",
@@ -96,7 +101,13 @@
             "approved_executor": "reference_adapter",
             "primary_renderer": "Remotion"
           },
-          "command": ["{python}", "{dependency_root}/scripts/datamagic_native_adapter.py", "--probe", "--project-root", "{project_root}"],
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/datamagic_native_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
           "timeout_seconds": 30
         }
       ],
@@ -277,7 +288,7 @@
       "binding_probes": [
         {
           "entrypoint": "scripts/render_hypit_native.mjs",
-          "producer_version": "1.2.0",
+          "producer_version": "1.3.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",
@@ -679,7 +690,8 @@
       "target": ".",
       "path_type": "directory",
       "entrypoints": [
-        "scripts/upstream_scene_adapter.py"
+        "scripts/upstream_scene_adapter.py",
+        "scripts/onetake_runtime.py"
       ],
       "binding_probes": [
         {
@@ -1336,8 +1348,9 @@
       "target": "gbro-cover-design",
       "install": {
         "group": "gbro-cover-design-skill",
-        "method": "skill-installer",
+        "method": "project-local-clone",
         "source": "https://github.com/pyang5166/gbro-cover-design.git",
+        "destination": "vendor/gbro-cover-design",
         "approval_required": true
       }
     },
@@ -1349,7 +1362,7 @@
         "speech-cleanup",
         "edit-structure"
       ],
-      "target": "video-use-skill",
+      "target": "video-use",
       "capabilities": [
         "speech.word-timestamps",
         "speech.verbatim-transcription",
@@ -1358,9 +1371,10 @@
         "qa.cut-boundary"
       ],
       "install": {
-        "group": "video-use-skill",
-        "method": "skill-installer",
+        "group": "video-use",
+        "method": "project-local-clone",
         "source": "https://github.com/browser-use/video-use.git",
+        "destination": "vendor/video-use",
         "approval_required": true
       }
     },
@@ -1504,9 +1518,9 @@
         "erduo-broll-loop-engineering/SKILL.md"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/erduo1998-cell/erduo-broll-loop-engineering.git",
-        "destination": "erduo-broll-loop-engineering",
+        "destination": "vendor/erduo-broll-loop-engineering",
         "approval_required": true
       }
     },
@@ -1518,7 +1532,7 @@
         "speech-cleanup",
         "edit-structure"
       ],
-      "target": "video-use-runtime",
+      "target": "video-use",
       "path_type": "directory",
       "capabilities": [
         "speech.word-timestamps",
@@ -1591,9 +1605,10 @@
         }
       ],
       "install": {
-        "method": "git-clone",
+        "group": "video-use",
+        "method": "project-local-clone",
         "source": "https://github.com/browser-use/video-use.git",
-        "destination": "video-use-runtime",
+        "destination": "vendor/video-use",
         "approval_required": true
       }
     },
@@ -1615,9 +1630,9 @@
         "src/camera_transition_director.py"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/Hao0321/video-autopilot-kit.git",
-        "destination": "video-autopilot-kit",
+        "destination": "vendor/video-autopilot-kit",
         "approval_required": true
       }
     },
@@ -1637,12 +1652,12 @@
       ],
       "entrypoints": [
         "README.md",
-        "skills/talking-head-recut/assets/vendor/gsap.min.js"
+        "packages/core/package.json"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/heygen-com/hyperframes.git",
-        "destination": "hyperframes",
+        "destination": "vendor/hyperframes",
         "approval_required": true
       }
     },
@@ -1690,11 +1705,11 @@
             "--producer-version",
             "{producer_version}",
             "--runtime-root",
-            "{project_root}/runtime/hyperframes-0.8.167",
+            "{project_root}/runtime/hyperframes-0.9.100",
             "--runtime-revision",
-            "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
+            "ceb8640ba147c54ef0c73ebccdde923a6561b493",
             "--renderer-version",
-            "0.8.167"
+            "0.9.100"
           ]
         },
         {
@@ -1720,11 +1735,11 @@
             "--producer-version",
             "{producer_version}",
             "--runtime-root",
-            "{project_root}/runtime/hyperframes-0.8.167",
+            "{project_root}/runtime/hyperframes-0.9.100",
             "--runtime-revision",
-            "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
+            "ceb8640ba147c54ef0c73ebccdde923a6561b493",
             "--renderer-version",
-            "0.8.167"
+            "0.9.100"
           ]
         },
         {
@@ -1750,11 +1765,11 @@
             "--producer-version",
             "{producer_version}",
             "--runtime-root",
-            "{project_root}/runtime/hyperframes-0.8.167",
+            "{project_root}/runtime/hyperframes-0.9.100",
             "--runtime-revision",
-            "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
+            "ceb8640ba147c54ef0c73ebccdde923a6561b493",
             "--renderer-version",
-            "0.8.167"
+            "0.9.100"
           ]
         }
       ],
@@ -1960,9 +1975,9 @@
         "packages/cli"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/remotion-dev/remotion.git",
-        "destination": "remotion",
+        "destination": "vendor/remotion",
         "approval_required": true
       }
     },
@@ -1983,9 +1998,9 @@
         "skills/creative/prompting/grok-prompting.md"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/calesthio/OpenMontage.git",
-        "destination": "OpenMontage",
+        "destination": "vendor/OpenMontage",
         "approval_required": true
       }
     },
@@ -2006,9 +2021,9 @@
         "schema_data.json"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/SamurAIGPT/Generative-Media-Skills.git",
-        "destination": "Generative-Media-Skills",
+        "destination": "vendor/Generative-Media-Skills",
         "approval_required": true
       }
     },
@@ -2032,9 +2047,9 @@
         "packages/studio/src/utils/generationLifecycle.js"
       ],
       "install": {
-        "method": "git-clone",
+        "method": "project-local-clone",
         "source": "https://github.com/Anil-matcha/Open-Generative-AI.git",
-        "destination": "Open-Generative-AI",
+        "destination": "vendor/Open-Generative-AI",
         "approval_required": true
       }
     },

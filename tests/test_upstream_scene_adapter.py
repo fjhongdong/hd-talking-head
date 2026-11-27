@@ -28,6 +28,7 @@ def brief():
         "source_binding": {"aroll_sha256": "a" * 64, "segment_id": "seg-1", "start": 0, "end": 6},
         "template_request": {"semantic_family": "process", "information_units": 3, "numeric_values": [], "numeric_scale": "not_applicable"},
         "composition": {"id": "task", "width": 1080, "height": 1920, "fps": 24, "frames": 144},
+        "creative_handoff": {"transcript": "打开设置", "semantic_goal": "进入设置页", "required_change": "面板展开"},
         "files": [{"media_ref": "entry", "job_path": "scene/index.html", "scene_path": "index.html", "sha256": "b" * 64},
                   {"media_ref": "workflow", "job_path": "scene/workflow.json", "scene_path": "workflow.json", "sha256": "c" * 64}],
         "workflow_media_ref": "workflow"}
@@ -177,7 +178,7 @@ class UpstreamSceneTests(unittest.TestCase):
         self.assertEqual(scene.lemo_native_fps(SKILL, "memphis-diorama"), 60)
         self.assertEqual(scene.lemo_native_fps(SKILL, "swiss-motion"), 24)
 
-    def test_lemo_handoff_required_and_onetake_is_unchanged(self):
+    def test_native_scenes_use_their_own_semantic_handoff(self):
         b = lemo_brief(); b.pop("creative_handoff")
         with self.assertRaises(ValueError): scene.validate_brief(json.dumps(b))
         b = lemo_brief(); b["creative_handoff"]["design_plan"].pop("focus")
@@ -185,7 +186,13 @@ class UpstreamSceneTests(unittest.TestCase):
         b = lemo_brief(); b["files"].pop()
         with self.assertRaisesRegex(ValueError, "TREATMENT.md"):
             scene.validate_brief(json.dumps(b))
-        self.assertNotIn("style_slug", scene.create_binding(SimpleNamespace(dependency_id="onetake", entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY), renderer_version=scene.SOURCES["onetake"][0], launcher="python"), json.dumps(brief()).encode()))
+        b = brief()
+        adapter = SimpleNamespace(dependency_id="onetake", entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY),
+                                  renderer_version=scene.SOURCES["onetake"][0], launcher="python")
+        binding = scene.create_binding(adapter, json.dumps(b).encode())
+        self.assertEqual(binding["template_id"], scene.ONETAKE_TEMPLATE_ID)
+        self.assertEqual(binding["invocation_record"]["creative_handoff"], b["creative_handoff"])
+        self.assertNotIn("style_slug", binding["invocation_record"])
 
     def test_scene_freeze_accepts_more_than_eight_files_and_rejects_bad_types(self):
         b = lemo_brief()

@@ -21,7 +21,7 @@ DEPENDENCY_ID = "adu-motion-video"
 VERSION = "2.3.0"
 TEMPLATE_ID = "adu-motion-video/native-compare"
 FAMILY = "old_new_comparison"
-SOURCE_PIN = "4a52ae2cff542cfb0bfcf6e93e5120c55d0110cf"
+SOURCE_PIN = "4ae737a04107083288c02eab5c0861834fcc0364"
 FFMPEG_DIR = "runtime/ffmpeg-9.0.2/bin"
 
 
@@ -96,11 +96,9 @@ def validate_brief(payload):
 def check_runtime(project_root):
     project = Path(project_root).resolve(strict=True)
     source = project / "vendor/adu-motion-video"
-    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
-    if head != SOURCE_PIN:
+    from prepare_sources import bundled_source_revision
+    if bundled_source_revision(project, source) != SOURCE_PIN:
         raise ValueError("Adu source revision changed")
-    subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", "template", "scripts/render_project.mjs", "scripts/chrome.mjs", "scripts/color_management.py", "scripts/output-signature.mjs"],
-                   cwd=source, check=True, stdout=subprocess.DEVNULL)
     browser = next((p for p in browser_candidates(project) if p.is_file() and os.access(p, os.X_OK)), project / ".remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell")
     if not browser.is_file() or not os.access(browser, os.X_OK):
         raise ValueError("Project render browser unavailable")

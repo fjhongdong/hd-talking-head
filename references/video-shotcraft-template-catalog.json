@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "channel": "video-shotcraft",
-  "repository_commit": "1266a3ec4831289c4d893d42dd5102723658039a",
+  "repository_commit": "1152363da5c824b32dba6d8a2ef7f935b677e445",
   "counting_rule": "124 native recipe cards + Ink Press full template; 150 gallery style demos remain variants, never separate templates. Camera/transition/rhythm recipes retain their actual purpose.",
   "native_paths": [
     {

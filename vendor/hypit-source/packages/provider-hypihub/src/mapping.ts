@@ -9,9 +9,11 @@ const SEEDREAM: ModuleRef = { name: "@hypit/seedream", version: "1" };
 const MINIMAX: ModuleRef = { name: "@hypit/minimax-h3", version: "1" };
 const GROK: ModuleRef = { name: "@hypit/grok-imagine", version: "1" };
 const PIXVERSE: ModuleRef = { name: "@hypit/pixverse", version: "1" };
+const BACH: ModuleRef = { name: "@hypit/bach", version: "1" };
 const MIMO_SPEECH: ModuleRef = { name: "@hypit/mimo-speech", version: "1" };
 const FISHAUDIO_SPEECH: ModuleRef = { name: "@hypit/fishaudio-speech", version: "1" };
 const ELEVENLABS_SPEECH: ModuleRef = { name: "@hypit/elevenlabs-speech", version: "1" };
+const NOIZ_AUDIO: ModuleRef = { name: "@hypit/noiz-audio", version: "1" };
 
 const seedance = (name: string): GenerationWireMapping => ({
   capability: { module: SEEDANCE, name }, result: "video", routes: [{ model: name }],
@@ -32,8 +34,8 @@ const seedance = (name: string): GenerationWireMapping => ({
 
 /**
  * PixVerse V6 and C1 on `POST /v1/videos`. Both take the same body; V6 additionally accepts
- * reference videos, which carry the length of the run in place of `seconds`. The model's own
- * `quality` band is HypiHub's `resolution`.
+ * reference videos, which carry the length of the run in place of `seconds`, a sampling `seed`
+ * and the `multi_clip` switch. The model's own `quality` band is HypiHub's `resolution`.
  */
 const pixverse = (name: string, model: string): GenerationWireMapping => ({
   capability: { module: PIXVERSE, name }, result: "video", routes: [{ model }],
@@ -42,7 +44,11 @@ const pixverse = (name: string, model: string): GenerationWireMapping => ({
     firstFrame: { as: "url", field: "first_frame" },
     lastFrame: { as: "url", field: "last_frame" },
     referenceImage: { as: "urlArray", field: "reference_image_urls" },
-    ...(name === "pixverse-v6" ? { referenceVideo: { as: "urlArray" as const, field: "reference_videos" } } : {}),
+    ...(name === "pixverse-v6" ? {
+      referenceVideo: { as: "urlArray" as const, field: "reference_videos" },
+      seed: { as: "value" as const, field: "seed" },
+      multiClip: { as: "value" as const, field: "multi_clip" },
+    } : {}),
     duration: { as: "value", field: "seconds" },
     quality: { as: "value", field: "resolution" },
     aspectRatio: { as: "value", field: "aspect_ratio" },
@@ -51,6 +57,23 @@ const pixverse = (name: string, model: string): GenerationWireMapping => ({
 });
 
 export const hypiHubMappings: readonly GenerationWireMapping[] = [
+  {
+    capability: { module: BACH, name: "bach-1.0-pro" }, result: "video", routes: [{ model: "bach/bach-1.0-pro" }],
+    fields: {
+      prompt: { as: "value", field: "prompt" },
+      duration: { as: "value", field: "seconds" },
+      resolution: { as: "value", field: "resolution" },
+      aspectRatio: { as: "value", field: "aspect_ratio" },
+      generateAudio: { as: "value", field: "generate_audio" },
+      seed: { as: "value", field: "seed" },
+      firstFrame: { as: "url", field: "first_frame" },
+      lastFrame: { as: "url", field: "last_frame" },
+      // Each reference may carry a `start_time` offset, sent as `{ url, start_time }`.
+      referenceImage: { as: "itemObject", field: "reference_image_urls", urlKey: "url", fieldKeys: { startTime: "start_time" } },
+      referenceVideo: { as: "itemObject", field: "reference_videos", urlKey: "url", fieldKeys: { startTime: "start_time" } },
+      referenceAudio: { as: "itemObject", field: "reference_audios", urlKey: "url", fieldKeys: { startTime: "start_time" } },
+    },
+  },
   {
     capability: { module: { name: "@hypit/volcengine-matting", version: "1" }, name: "matte-portrait-video" },
     result: "video", routes: [{ model: "matte-portrait-video" }],
@@ -162,6 +185,75 @@ export const hypiHubMappings: readonly GenerationWireMapping[] = [
     fields: {
       text: { as: "value", field: "input" },
       voiceDescription: { as: "value", field: "voice_description" },
+    },
+  },
+  {
+    capability: { module: NOIZ_AUDIO, name: "noiz-text-to-sound" }, result: "audio", routes: [{ model: "noiz-text-to-sound" }],
+    fields: {
+      prompt: { as: "value", field: "input" },
+      duration: { as: "value", field: "duration_seconds" },
+      outputFormat: { as: "value", field: "response_format" },
+    },
+  },
+  {
+    capability: { module: NOIZ_AUDIO, name: "noiz-tts" }, result: "audio", routes: [{ model: "noiz-tts" }],
+    fields: {
+      text: { as: "value", field: "input" },
+      voiceId: { as: "value", field: "voice" },
+      modelId: { as: "value", field: "model_id" },
+      outputFormat: { as: "value", field: "response_format" },
+      speed: { as: "value", field: "speed" },
+      duration: { as: "value", field: "duration_seconds" },
+      targetLang: { as: "value", field: "language" },
+      qualityPreset: { as: "value", field: "quality_preset" },
+      similarityEnh: { as: "value", field: "similarity_enh" },
+      emo: { as: "value", field: "emo" },
+      trimSilence: { as: "value", field: "trim_silence" },
+    },
+  },
+  {
+    capability: { module: NOIZ_AUDIO, name: "noiz-voice-clone" }, result: "audio", routes: [{ model: "noiz-voice-clone" }],
+    fields: {
+      text: { as: "value", field: "input" },
+      voiceReference: { as: "urlArray", field: "reference_audio" },
+      modelId: { as: "value", field: "model_id" },
+      outputFormat: { as: "value", field: "response_format" },
+      speed: { as: "value", field: "speed" },
+      duration: { as: "value", field: "duration_seconds" },
+      targetLang: { as: "value", field: "language" },
+      qualityPreset: { as: "value", field: "quality_preset" },
+      similarityEnh: { as: "value", field: "similarity_enh" },
+      emo: { as: "value", field: "emo" },
+      trimSilence: { as: "value", field: "trim_silence" },
+      denoise: { as: "value", field: "denoise" },
+    },
+  },
+  {
+    capability: { module: NOIZ_AUDIO, name: "noiz-yue2-music" }, result: "audio", routes: [{ model: "noiz-yue2-music" }],
+    fields: {
+      prompt: { as: "value", field: "prompt" },
+      lyrics: { as: "value", field: "lyrics" },
+      lyricsPrompt: { as: "value", field: "lyrics_prompt" },
+      abc: { as: "value", field: "abc" },
+      cot: { as: "value", field: "cot" },
+      title: { as: "value", field: "title" },
+      tags: { as: "value", field: "tags" },
+      negativeTags: { as: "value", field: "negative_tags" },
+      vocalGender: { as: "value", field: "vocal_gender" },
+      lyricTimestamps: { as: "value", field: "lyric_timestamps" },
+    },
+  },
+  {
+    capability: { module: NOIZ_AUDIO, name: "noiz-yue2-cover" }, result: "audio", routes: [{ model: "noiz-yue2-cover" }],
+    fields: {
+      sourceAudio: { as: "urlArray", field: "reference_audio" },
+      lyrics: { as: "value", field: "lyrics" },
+      musicDescription: { as: "value", field: "music_description" },
+      style: { as: "value", field: "style" },
+      melodyAdherence: { as: "value", field: "melody_adherence" },
+      title: { as: "value", field: "title" },
+      vocalGender: { as: "value", field: "vocal_gender" },
+      lyricTimestamps: { as: "value", field: "lyric_timestamps" },
     },
   },
 ];

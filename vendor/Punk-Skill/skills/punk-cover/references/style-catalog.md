@@ -12,6 +12,7 @@ style atom.
 
 | Style | Style ID | Metadata | Style | Best For |
 | --- | --- | --- | --- | --- |
+| 古典油画 · 极简视觉隐喻 | `classical-oil-minimal-metaphor` | `styles/classical-oil-minimal-metaphor/META.md` | `styles/classical-oil-minimal-metaphor/STYLE.md` | Purely visual editorial covers translating contemporary ideas into one poetic Old Master oil-painting collage on pure white, without text. |
 | 黑白极简概念 | `black-white-minimal-concept` | `styles/black-white-minimal-concept/META.md` | `styles/black-white-minimal-concept/STYLE.md` | Abstract, editorial, philosophical, strategic, restrained covers with strong typography and visual metaphor. |
 | 黑白复古蚀刻版画封面 | `black-white-etching-editorial-cover` | `styles/black-white-etching-editorial-cover/META.md` | `styles/black-white-etching-editorial-cover/STYLE.md` | Monochrome engraving, etching, antique scientific-illustration, surreal editorial, and philosophical covers built around one strong metaphor. |
 | 语义转译极简 | `semantic-minimal-translation` | `styles/semantic-minimal-translation/META.md` | `styles/semantic-minimal-translation/STYLE.md` | One word, short phrase, slogan, or concept that needs a clever minimal visual translation. |
@@ -81,6 +82,7 @@ style atom.
 | `brand-collaboration-connection` | Brand Collaboration Connection | 品牌联动、工具集成、自动化工作流、产品教程和企业连接。 |
 | `anthropic-research-style` | Anthropic Research Style | AI、研究、知识、系统和设计主题的安静编辑封面。 |
 | `kimi-stlye` | Kimi Style | AI、研究、产品、材料、系统和创意项目的俯视档案桌。 |
+| `classical-oil-minimal-metaphor` | Classical Oil Painting Minimal Metaphor | 纯白留白、彩色古典油画、单一巧妙隐喻的无字概念封面。 |
 | `minimal-light-tech` | Minimal Light Tech | 轻科技、工具、产品和教程的纯白留白与渐变锚点。 |
 | `minimal-visual-metaphor` | Minimal Visual Metaphor | 商业科技、AI、产品、组织、工作流和系统变化。 |
 
@@ -119,3 +121,5 @@ These reusable style atoms exist in `styles/`, but are not part of the default `
 - For a single abstract term, prefer `语义转译极简`, `复古油墨点阵隐喻`, `黑白极简概念`, or `法式极简墨线海报`.
 - For architecture, landmarks, cities, travel posters, or place-focused essays, prefer `先锋复古建筑海报`.
 - For events, sports, launches, city-scale topics, or covers needing maximum first-glance impact, prefer `彩色新构成主义巨构海报`.
+
+- For text-free philosophical, cultural, or contemporary-idea covers with classical oil-painting cutouts and one poetic relationship, prefer `古典油画 · 极简视觉隐喻`.

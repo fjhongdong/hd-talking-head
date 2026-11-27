@@ -8,11 +8,14 @@ importers:
 
   .:
     dependencies:
+      '@hypit/bach':
+        specifier: workspace:^0.1.1
+        version: link:packages/bach
       '@hypit/browser-capture':
         specifier: workspace:^0.2.0
         version: link:packages/browser-capture
       '@hypit/media-local':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.2.1
         version: link:packages/media-local
       '@hypit/runtime-local':
         specifier: workspace:^0.1.1
@@ -21,10 +24,10 @@ importers:
         specifier: workspace:^0.1.1
         version: link:packages/speech-estimate
       '@hypit/studio':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.2.1
         version: link:packages/studio
       '@hypit/video':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.2.4
         version: link:packages/video
       '@hypit/whisperx':
         specifier: workspace:^0.2.0
@@ -165,6 +168,9 @@ importers:
       '@hypit/narrative-temporal':
         specifier: workspace:*
         version: link:packages/narrative-temporal
+      '@hypit/noiz-audio':
+        specifier: workspace:*
+        version: link:packages/noiz-audio
       '@hypit/pixverse':
         specifier: workspace:*
         version: link:packages/pixverse
@@ -198,6 +204,9 @@ importers:
       '@hypit/provider-pollo':
         specifier: workspace:*
         version: link:packages/provider-pollo
+      '@hypit/provider-sume':
+        specifier: workspace:*
+        version: link:packages/provider-sume
       '@hypit/provider-tokendance':
         specifier: workspace:*
         version: link:packages/provider-tokendance
@@ -646,6 +655,28 @@ importers:
       '@hypit/spatial':
         specifier: workspace:*
         version: link:../spatial
+
+  packages/bach:
+    dependencies:
+      '@hypit/generation':
+        specifier: workspace:^0.1.0
+        version: link:../generation
+    devDependencies:
+      '@hypit/blob':
+        specifier: workspace:*
+        version: link:../blob
+      '@hypit/hypit':
+        specifier: workspace:*
+        version: link:../..
+      '@hypit/markup':
+        specifier: workspace:*
+        version: link:../markup
+      '@hypit/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@hypit/text':
+        specifier: workspace:*
+        version: link:../text
 
   packages/blob:
     dependencies:
@@ -1278,7 +1309,7 @@ importers:
         specifier: workspace:^0.1.0
         version: link:../composition
       '@hypit/html-program':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.1.1
         version: link:../html-program
       '@hypit/hypit':
         specifier: workspace:^0.3.1
@@ -1775,6 +1806,28 @@ importers:
         specifier: workspace:*
         version: link:../protocol
 
+  packages/noiz-audio:
+    dependencies:
+      '@hypit/generation':
+        specifier: workspace:^0.1.0
+        version: link:../generation
+    devDependencies:
+      '@hypit/blob':
+        specifier: workspace:*
+        version: link:../blob
+      '@hypit/hypit':
+        specifier: workspace:*
+        version: link:../..
+      '@hypit/markup':
+        specifier: workspace:*
+        version: link:../markup
+      '@hypit/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@hypit/text':
+        specifier: workspace:*
+        version: link:../text
+
   packages/pixverse:
     dependencies:
       '@hypit/generation':
@@ -2085,6 +2138,49 @@ importers:
       '@hypit/runtime-local':
         specifier: workspace:*
         version: link:../runtime-local
+
+  packages/provider-sume:
+    dependencies:
+      '@hypit/generation':
+        specifier: workspace:^0.1.0
+        version: link:../generation
+    devDependencies:
+      '@hypit/endpoint':
+        specifier: workspace:*
+        version: link:../endpoint
+      '@hypit/gpt-image':
+        specifier: workspace:*
+        version: link:../gpt-image
+      '@hypit/grok-imagine':
+        specifier: workspace:*
+        version: link:../grok-imagine
+      '@hypit/hypit':
+        specifier: workspace:*
+        version: link:../..
+      '@hypit/minimax-h3':
+        specifier: workspace:*
+        version: link:../minimax-h3
+      '@hypit/nano-banana':
+        specifier: workspace:*
+        version: link:../nano-banana
+      '@hypit/pixverse':
+        specifier: workspace:*
+        version: link:../pixverse
+      '@hypit/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@hypit/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@hypit/runtime-local':
+        specifier: workspace:*
+        version: link:../runtime-local
+      '@hypit/seedance':
+        specifier: workspace:*
+        version: link:../seedance
+      '@hypit/seedream':
+        specifier: workspace:*
+        version: link:../seedream
 
   packages/provider-tokendance:
     dependencies:
@@ -2487,7 +2583,7 @@ importers:
         specifier: workspace:^0.1.0
         version: link:../composition
       '@hypit/html-program':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.1.1
         version: link:../html-program
       '@hypit/media-local':
         specifier: workspace:^0.2.0
@@ -2721,6 +2817,9 @@ importers:
       '@hypit/audio-track':
         specifier: workspace:^0.2.0
         version: link:../audio-track
+      '@hypit/bach':
+        specifier: workspace:^0.1.1
+        version: link:../bach
       '@hypit/caption':
         specifier: workspace:^0.1.0
         version: link:../caption
@@ -2764,7 +2863,7 @@ importers:
         specifier: workspace:^0.1.0
         version: link:../html-document
       '@hypit/html-program':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.1.1
         version: link:../html-program
       '@hypit/html-video':
         specifier: workspace:^0.2.0
@@ -2796,14 +2895,17 @@ importers:
       '@hypit/narrative-temporal':
         specifier: workspace:^0.1.0
         version: link:../narrative-temporal
+      '@hypit/noiz-audio':
+        specifier: workspace:^0.1.1
+        version: link:../noiz-audio
       '@hypit/pixverse':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.2.1
         version: link:../pixverse
       '@hypit/provider-html-local':
         specifier: workspace:^0.2.0
         version: link:../provider-html-local
       '@hypit/provider-hypihub':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.2.4
         version: link:../provider-hypihub
       '@hypit/provider-image-opencv-local':
         specifier: workspace:^0.2.0

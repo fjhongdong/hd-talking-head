@@ -17,10 +17,10 @@ from adapter_kit import browser_candidates, identity_from_bytes, sha256_file as 
 SKILL = PACKAGE_ROOT
 ENTRY = "scripts/render_hypit_native.mjs"
 DEPENDENCY_ID = "hypit-native-chat"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 TEMPLATE_ID = "hypit/native-plan-change-chat"
 FAMILY = "plan_change_dialogue"
-SOURCE_PIN = "0d36de9a9d17562fca0e478969b80eb1c16a7693"
+SOURCE_PIN = "e4abc8b246e72600fc186d881fa831074e1060f5"
 
 
 
@@ -70,8 +70,8 @@ def check_runtime(project_root):
     source = project / "vendor/hypit-source"
     if subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip() != SOURCE_PIN:
         raise ValueError("Hypit source revision changed")
-    if json.loads((source / "package.json").read_bytes())["version"] != "0.3.1":
-        raise ValueError("Hypit requires the pinned 0.3.1 distribution")
+    if json.loads((source / "package.json").read_bytes())["version"] != "0.3.5":
+        raise ValueError("Hypit requires the pinned 0.3.5 distribution")
     subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", "packages", "bin", "examples/semantic-composition/packages/chat-scene"],
                    cwd=source, check=True, stdout=subprocess.DEVNULL)
     native = source / "examples/semantic-composition/packages/chat-scene"
@@ -85,16 +85,18 @@ def check_runtime(project_root):
     if not (native / "dist/activation.js").is_file():
         raise ValueError("Hypit native chat package has not been built")
     files += [f for f in sorted((SKILL / "assets/hypit-native-layout").rglob("*")) if f.is_file()]
+    files.append(SKILL / "assets/text-card-layout/card.css")
     identity = identity_from_bytes(files)
     return {"source": str(source), "browser": str(browser), "ffmpeg": ffmpeg, "ffprobe": ffprobe, "identity": identity}
 
 
 def prepare_runtime(project_root):
-    runtime = Path(project_root).resolve(strict=True) / "vendor/hypit-source"
-    pnpm = shutil.which("pnpm")
+    project = Path(project_root).resolve(strict=True)
+    runtime = project / "vendor/hypit-source"
+    pnpm = project / "runtime/pnpm-10.33.0/node_modules/.bin/pnpm"
     node = shutil.which("node")
-    if not pnpm or not node:
-        raise ValueError("Hypit requires Node >=22.15 and pnpm 10.33.0")
+    if not pnpm.is_file() or not os.access(pnpm, os.X_OK) or not node:
+        raise ValueError("Hypit requires Node >=22.15 and project-local pnpm 10.33.0")
     if subprocess.check_output([pnpm, "--version"], text=True).strip() != "10.33.0":
         raise ValueError("Hypit requires pnpm 10.33.0")
     version = subprocess.check_output([node, "--version"], text=True).strip().lstrip("v").split(".")

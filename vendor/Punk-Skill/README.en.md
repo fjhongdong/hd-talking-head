@@ -123,6 +123,7 @@ Style IDs remain the same in both language modes. Localized names and use-case d
 | Anthropic Research Style | `anthropic-research-style` | AI, research, knowledge, systems, and design topics needing a quiet editorial cover |
 | Kimi Style | `kimi-stlye` | AI, research, products, materials, systems, and creative projects needing an archival tabletop view |
 | Minimal Light Tech | `minimal-light-tech` | Light-tech, tools, products, and tutorials with clean white space and a gradient anchor |
+| Classical Oil Painting Minimal Metaphor | `classical-oil-minimal-metaphor` | Text-free Old Master oil-painting collage, pure white space, and one poetic visual metaphor |
 | Minimal Visual Metaphor | `minimal-visual-metaphor` | Business technology, AI, products, organizations, workflows, and system change |
 
 ### Style examples
@@ -153,8 +154,10 @@ Style IDs remain the same in both language modes. Localized names and use-case d
 | Retro Japanese Sci-Fi Anime Cover | French Minimal Ink Poster | Brand Collaboration Connection |
 | ![Anthropic Research Style](./screenshots/punk-cover-styles/anthropic-research-style.png) | ![Kimi Style](./screenshots/punk-cover-styles/kimi-stlye.png) | ![Minimal Visual Metaphor](./screenshots/punk-cover-styles/minimal-visual-metaphor.png) |
 | Anthropic Research Style | Kimi Style | Minimal Visual Metaphor |
-| ![Minimal Light Tech](./screenshots/punk-cover-styles/minimal-light-tech.png) | | |
-| Minimal Light Tech | | |
+| ![Minimal Light Tech](./screenshots/punk-cover-styles/minimal-light-tech.png) | ![Classical Oil Painting Minimal Metaphor](./screenshots/punk-cover-styles/classical-oil-minimal-metaphor.png) | |
+| Minimal Light Tech | Classical Oil Painting Minimal Metaphor | |
+
+The classical oil-painting example is a user-provided style reference, not a generated validation sample. Use fresh subjects and keep all key elements inside white margins.
 
 ## punk-ip-video-cover
 
@@ -278,3 +281,13 @@ Third-party materials are not relicensed by this repository's license statements
 
 - Prompt design and visual direction: [@adrianpunk](https://github.com/adrianpunk) · [X](https://x.com/AdrianPunk115)
 - Repository maintenance: [@jinchenma94](https://github.com/jinchenma94) · [X](https://x.com/jinchenma_ai)
+
+## About the author
+
+**Punk**
+
+AI视觉/AI小白教程<br>
+中科大硕士｜Punk Skills 作者｜3个月挣8位数<br>
+AfterNoise社群发起人
+
+[@AdrianPunk115](https://x.com/AdrianPunk115)

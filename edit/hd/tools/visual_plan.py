@@ -2105,9 +2105,12 @@ def _skill_selection_for_publication(
         from .motion_match_cache import _validate_review_structure, validate_design_handoffs
         if managed:
             from .motion_capabilities import _check_offline_with_selection
-            from . import visual_confirmation
+            from . import semantic_visual_plan, visual_confirmation
             approved_selection = None
-            if source_proposal and 'confirmed_local_list' in source_proposal['inputs']:
+            planned_timing = any(
+                semantic_visual_plan.component_timing(row, key) is not None
+                for key, row in semantic_visual_plan.component_semantic_rows(treatment).items())
+            if source_proposal and ('confirmed_local_list' in source_proposal['inputs'] or planned_timing):
                 original = visual_confirmation._read(visual_confirmation._exact(
                     job.job_dir, source_proposal['inputs']['treatment']))
                 approved_selection = original['skill_selection']

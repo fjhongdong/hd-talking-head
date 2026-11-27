@@ -1,6 +1,6 @@
 # TalkCraft 完整原生调用
 
-`video-talkcraft` 调用固定提交 `ccb8a571f4bd620b5588bef4b264b5120f5042fc` 的完整第三方 Skill。项目内入口为 `vendor/talkcraft/SKILL.md`。`talkcraft-native-source.json` 保存该提交原始归档及全部 917 个原始文件的身份；自有桥按此清单核对，第三方文件保持原样。补齐时逐字比较重叠文件，只补原始缺文件。
+`video-talkcraft` 调用固定提交 `57300498a46db6e55a3d824f5555265da1e5c9cd` 的完整第三方 Skill。项目内入口为 `vendor/talkcraft/SKILL.md`。`talkcraft-native-source.json` 保存该提交原始归档及全部 927 个原始文件的身份；自有桥按此清单核对，第三方文件保持原样。本次升级按官方归档逐文件核对并同步，原生 108 张 TSX、渲染脚本及依赖锁文件保持上游原样。
 
 ## 函数边界
 
@@ -10,7 +10,7 @@
 
 ## 入口与结果
 
-准备入口是 `python scripts/prepare_talkcraft_native.py --project-root <完整包根>`；增加 `--check` 只检查，不安装。它把第三方原始 `runtime/package.json` 和 `package-lock.json` 原封放入包内 `runtime/talkcraft-native-ccb8a571/`，仅执行锁文件安装，不调用 upgrade、不改原生源码、不改派生生产 runtime。新创作默认使用原生锁定 Remotion 4.0.519。检查会核对全部直接依赖版本、加载必要 Remotion API，并核对本机 Node、FFmpeg、FFprobe 和现有 Chrome；没有浏览器时明确失败，不隐式下载。
+准备入口是 `python scripts/prepare_talkcraft_native.py --project-root <完整包根>`；增加 `--check` 只检查，不安装。它把第三方原始 `runtime/package.json` 和 `package-lock.json` 原封放入包内 `runtime/talkcraft-native/`，仅执行锁文件安装，不调用 upgrade、不改原生源码、不改派生生产 runtime。新创作默认使用原生锁定 Remotion 4.0.519。本次上游升级未变更原始依赖锁文件，沿用已准备的同一份依赖，不重复安装。检查会核对全部直接依赖版本、加载必要 Remotion API，并核对本机 Node、FFmpeg、FFprobe 和现有 Chrome；没有浏览器时明确失败，不隐式下载。
 
 桥的 `--probe --project-root <完整包根>` 使用同一真实依赖检查。原生任务返回已准备的 `runtime.node_modules` 与 `runtime.browser`，独立 Job 工程链接这份依赖并显式传浏览器路径。无需已有样片工程、全局安装的 Skill 或派生卡动画。
 

@@ -9,8 +9,9 @@ import re
 import shutil
 import subprocess
 from adapter_kit import identity_from_digests, sha256_file as sha
+from prepare_sources import bundled_source_revision
 
-SOURCE_PIN = "5f2608c2e12abcf518f74dde86093b19f7f88603"
+SOURCE_PIN = "f4f38bfe295a3f768753857be9236cc3277c7dad"
 SYSTEM_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SOURCE_FILES = (
     "package.json", "cli/om.js", "cli/lib/project.js", "cli/lib/render.js",
@@ -53,11 +54,8 @@ def check_runtime(project_root, tools=None, *, mode="native_export"):
     files = [Path(__file__), *(Path(p) for p in found.values())]
     versions = {}
     if mode == "native_export":
-        revision = _run(["/usr/bin/git", "rev-parse", "--show-toplevel", "HEAD"], cwd=vendor).stdout.splitlines()
-        if revision != [str(vendor), SOURCE_PIN]:
+        if bundled_source_revision(project, vendor) != SOURCE_PIN:
             raise ValueError("Huashu Motion source root or revision changed")
-        if _run(["/usr/bin/git", "status", "--porcelain"], cwd=vendor).stdout.strip():
-            raise ValueError("Huashu Motion source is modified; stopped without repair")
         files += [vendor / name for name in SOURCE_FILES]
         versions["node_version"] = _run([found["node"], "--version"]).stdout.strip()
         match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", versions["node_version"])

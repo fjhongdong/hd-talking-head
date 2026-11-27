@@ -32,7 +32,7 @@
 
 两组必须改变所有声明的内容字段，保持所测入口和原生结构一致。首次测试在独立维护夹内运行真实 renderer；计划先写 `planned / exit_code=null`，成功之后保存进程自然产生的回执。不得先填写成功或伪造旧记录绕过资格门。目前封装的证明格式是正式 `ReferenceProcessAdapter` 回执；其他执行器须补真实适配和反例测试后才能登记，没有通用自动首轮注册器。`verified_third_party` 只允许 `tokens_only` / `content_reflow`；`verified_local_canonical` 为本 Skill 自有结构，可按已登记的结构合同使用 `structural`，但不得换入口或超容量。
 
-资格只表示模板可进入候选池。每个新 Job 仍必须用当前已批准文案执行 canary，由人工检查语义、文字、头肩头像、安全区和动效顺序；不得用历史资格样片自动批准当前 Job。
+资格表示模板可进入候选池。新 Job 根据本期已确认的语义、素材和规格实际调用，按[阶段合同](stage-contracts.md#制作交付与状态)交付。历史样片证明相应模板资格，本期成片接受以本版用户反馈为准。
 
 SemanticState 登记使用的头像合成 canary 只能通过 `validate_human_approval` 接受人工批准。验证器必须先校验完整 machine receipt：五类 `qualification_evidence`、每类 `reviewed_input` 与 `consumed_snapshot` 的逐文件哈希、合成片媒体规格、头像安全区、`pixel_qa`、逐态 `frames`、25 秒 montage 和 contact sheet，再核对人工批准绑定的三份 SHA-256。验证时还要对每段与 montage 重新 FFprobe；像素 QA 固定使用 `stable=4 / presence=8 / exit=4`，并直接从已哈希绑定的 consumed sample 与 source A-roll 现场抽取对照帧重新计算，不能信任 receipt 自报阈值或未绑定的缓存帧；最后抽取五个稳定帧验证 montage 的固定顺序。只有模板 ID 或 montage/contact sheet 哈希的极简回执必须拒绝；维护工具不得以补字段或重签旧证据绕过此门。
 
@@ -55,7 +55,7 @@ SemanticState 登记使用的头像合成 canary 只能通过 `validate_human_ap
 
 机器可证明“不同输入、不同像素、对应同一真实回执”，不能单独证明变化来自正确的文字、数字或语义。检查者必须对照两份 brief 逐一读出实际标题、标签、数值和单位，查看入场顺序、稳定阅读状态、退出连续性，并记录限制。改变颜色造成不同像素也不够。
 
-本包 DataRollup 两组虚构测试分别显示不同标题、3/4 条柱、不同数值与单位。Notification Cascade 两组虚构测试分别显示四条不同中文通知，随后退场并收束到不同中文结论；只支持 `milestone_notifications`、`progress_sequence`、`delivery_checkpoints`，信息单元必须恰好为 4，所有变量保持上游默认字符数的 ±20%。其中 `NOW` 与 `Show less` 是模板原生界面文字，不是残留论断。首次真实 CLI 编译需要已固定的本地运行时与字体资产；不能把资格写成任意环境无条件可用。资格样片均不包含头像、口播或事实审核。每个新 Job 仍需当前文案的三态 QA、正式合成的头像安全区与转场检查，以及原有人工作品验收。资格实验不是 canary，也不自动批准历史 Job 升级。
+本包 DataRollup 两组虚构测试分别显示不同标题、3/4 条柱、不同数值与单位。Notification Cascade 两组虚构测试分别显示四条不同中文通知，随后退场并收束到不同中文结论。它支持 `milestone_notifications`、`progress_sequence`、`delivery_checkpoints`，信息单元恰好为 4，所有变量保持上游默认字符数的 ±20%。`NOW` 与 `Show less` 是模板原生界面文字。首次真实 CLI 编译使用固定的本地运行时与字体资产。资格样片覆盖这两组模板测试，本期实际素材、头像、口播与成片交付按[阶段合同](stage-contracts.md#制作交付与状态)。
 
 ChatGPT Exchange 的历史双输入样片曾替换 22 个内容字段，但后续检查发现正文和表格裁字，现已退出活动 registry。历史执行合同和失败证据保留，仅供追溯，不能继续作为新候选的资格证明；不因两份像素不同就忽略真实可读性缺陷。
 

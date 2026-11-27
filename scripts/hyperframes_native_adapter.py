@@ -1,5 +1,6 @@
 """Freeze Job-owned HTML/bitmap assets and invoke the actual upstream HyperFrames CLI."""
 import hashlib,json,math,os,re,shutil,sys,subprocess,tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 if __name__ == '__main__' and Path(__file__).name == '<stdin>':
     import argparse
@@ -68,13 +69,13 @@ def validate_brief(payload):
     if b['entry']['scene_path']!='index.html':raise ValueError('One native HTML entry required')
     return b
 def check_runtime(project,executables=None):
-    runtime=resolve_runtime(project/'runtime/hyperframes-0.8.167')['root']
+    runtime=resolve_runtime(project/'runtime/hyperframes-0.9.100')['root']
     source_root=project/'vendor/hyperframes'
-    pins={project/'vendor/paper-collage-ad-codex/references/hyperframes-route.md':'255e9d5d87c3d2ad491c8f6e1d808e6d03f93f36f0efee95a584584a1e41366d',source_root/'registry/blocks/hw-pipeline/hw-pipeline.html':'5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb',source_root/'skills/talking-head-recut/assets/vendor/gsap.min.js':'c3a03a345e45bc954cd48c43f11572891f5dca7a5d99348d5bc14753a728618c'}
+    pins={project/'vendor/paper-collage-ad-codex/references/hyperframes-route.md':'255e9d5d87c3d2ad491c8f6e1d808e6d03f93f36f0efee95a584584a1e41366d',source_root/'registry/blocks/hw-pipeline/hw-pipeline.html':'5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb',runtime/'node_modules/gsap/dist/gsap.min.js':'92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb'}
     if any(sha(p)!=h for p,h in pins.items()):raise ValueError('Upstream native HTML runtime changed')
     paths={k:Path(executables[k] if executables else shutil.which(k)).resolve() for k in ('node','ffmpeg','ffprobe')}
     paths['browser']=next((p for p in browser_candidates(project) if p.is_file() and os.access(p,os.X_OK)), project/'.remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell')
-    paths['cli']=runtime/'node_modules/hyperframes/bin/hyperframes.mjs';paths['gsap']=project/'vendor/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js'
+    paths['cli']=runtime/'node_modules/hyperframes/bin/hyperframes.mjs';paths['gsap']=runtime/'node_modules/gsap/dist/gsap.min.js'
     for route, relative in ROUTES.items():
         source=(project/'vendor/paper-collage-ad-codex/references/hyperframes-route.md'
                 if route == 'paper-collage-ad/hyperframes' else source_root/relative)
@@ -114,6 +115,116 @@ def create_artifact_probe(ffprobe_executable):
 def create_binding(adapter,payload):
     b=validate_brief(payload);r=b['template_request']
     return dict(producer_type='dependency',dependency_id=DEPENDENCY_ID,entrypoint=ENTRY,producer_version=VERSION,primary_renderer='HyperFrames',renderer_version=RUNTIME_VERSION,template_origin='custom_fallback',template_id=template_id_for_route(b['upstream_route']),template_version=VERSION,verification_id=hashlib.sha256((adapter.entrypoint_sha256+b['entry']['sha256']).encode()).hexdigest(),adaptation_level='structural',source_entrypoint=ENTRY,source_sha256=adapter.entrypoint_sha256,semantic_families=[r['semantic_family']],capacity=dict(min_units=r['information_units'],max_units=r['information_units']),brief_sha256=hashlib.sha256(payload).hexdigest(),invocation_record=dict(argv=[str(adapter.launcher),ENTRY],status='planned',exit_code=None,template_request=r))
+
+
+def size_native_cards(directory, brief):
+    """Adapt the frozen native card scene after its original inputs are bound."""
+    from text_card_layout import card_rules
+
+    route = brief['upstream_route']
+    card_selectors = {
+        'hyperframes/beat-timeline': ('#root .bt-row', '#root .bt-title, #root .bt-subtitle', ''),
+        'hyperframes/macos-notification': (
+            '.notification-card', '.notification-body, .notification-title',
+            '.notification-body { display: block; -webkit-line-clamp: unset; }',
+        ),
+        'hyperframes/before-after-wipe': (
+            '#root .baw-chip', '#root .baw-chip', '#root .baw-chip { max-width: 42%; line-height: 1.2; }',
+        ),
+        'hyperframes/screen-flow-carousel': (
+            '#root .sfc-captions', '#root .sfc-caption',
+            '#root .sfc-captions { min-height: 12cqh; }'
+            '#root .sfc-caption { position: absolute; inset: auto 0 auto; min-height: 12cqh; text-align: center; }',
+        ),
+        'hyperframes/chat-message': ('#root .cm-bubble', '#root .cm-bubble', ''),
+    }
+    if route not in {'hyperframes/grid-card-assemble', 'hyperframes/notification-stack', *card_selectors}:
+        return
+    composition_id = route.removeprefix('hyperframes/')
+    class Mounts(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.sources = []
+
+        def handle_starttag(self, tag, attrs):
+            attributes = dict(attrs)
+            if attributes.get('data-composition-id') == composition_id:
+                self.sources.append(attributes.get('data-composition-src'))
+
+    parser = Mounts()
+    parser.feed((directory / 'index.html').read_text(encoding='utf-8'))
+    available = {asset['scene_path'] for asset in brief['assets']}
+    if len(parser.sources) == 1 and parser.sources[0] in available:
+        scene_path = directory / parser.sources[0]
+    elif route in card_selectors:
+        # Full-scene briefs may author the same native classes in the entry.
+        scene_path = directory / 'index.html'
+    else:
+        raise ValueError('Native card mount must name its frozen scene asset')
+    scene = scene_path.read_text(encoding='utf-8')
+    if route == 'hyperframes/grid-card-assemble':
+        css = card_rules('#root .gca-card', '#root .gca-label, #root .gca-body') + """
+          #root .gca-stage { grid-auto-rows: minmax(var(--gca-row-h, 34cqh), max-content) !important; }
+          #root .gca-card { min-height: var(--gca-row-h, 34cqh); overflow: visible; }
+        """
+        marker = '            // RETIME RANGE: fixed IN cascade, elastic still HOLD, optional OUT.'
+        sizing = """
+            // Text wraps at the chosen size; grid rows expand to contain it.
+            root.style.setProperty("--gca-font", "min(2.6cqw, " + labelCqh.toFixed(3) + "cqh)");
+            if (maxBody > 0) {
+              root.style.setProperty("--gca-body-font", "min(2.2cqw, " + bodyCqh.toFixed(3) + "cqh)");
+            }
+
+"""
+        if scene.count(marker) != 1:
+            raise ValueError('Native grid layout marker changed')
+        scene = scene.replace(marker, sizing + marker)
+    elif route == 'hyperframes/notification-stack':
+        css = card_rules('#root .ns-card', '#root .ns-title, #root .ns-body') + """
+          #root .ns-card { min-height: var(--ns-card-h, 14cqh); padding-block: 2cqmin; }
+        """
+        marker = '            // RETIME RANGE: arrivals on cues, fixed resolve, elastic still'
+        sizing = """
+            // Keep the original font, dot and line spacing while the card grows.
+            cards.forEach(function (card) {
+              var dot = card.querySelector(".ns-dot");
+              var text = card.querySelector(".ns-text");
+              dot.style.width = getComputedStyle(dot).width;
+              text.style.gap = getComputedStyle(text).gap;
+              text.querySelectorAll(".ns-title, .ns-body").forEach(function (line) {
+                line.style.fontSize = getComputedStyle(line).fontSize;
+              });
+            });
+            // Set every stack slot from the tallest actual wrapped card.
+            var mountHeight = root.offsetHeight || window.innerHeight;
+            var measuredHeight = Math.max.apply(null, cards.map(function (card) { return card.offsetHeight; }));
+            cardH = Math.max(cardH, measuredHeight * 100 / mountHeight);
+            slotH = cardH + GAP_CQH;
+            root.style.setProperty("--ns-card-h", cardH.toFixed(3) + "cqh");
+            stage.style.height = (count * cardH + (count - 1) * GAP_CQH).toFixed(3) + "cqh";
+            cards.forEach(function (card) { card.style.height = cardH.toFixed(3) + "cqh"; });
+
+"""
+        if scene.count(marker) != 1:
+            raise ValueError('Native notification layout marker changed')
+        scene = scene.replace(marker, sizing + marker)
+    else:
+        class_name = {
+            'hyperframes/beat-timeline': 'bt-title',
+            'hyperframes/macos-notification': 'notification-card',
+            'hyperframes/before-after-wipe': 'baw-chip',
+            'hyperframes/screen-flow-carousel': 'sfc-caption',
+            'hyperframes/chat-message': 'cm-bubble',
+        }[route]
+        if class_name not in scene:
+            return
+        container, content, additional_css = card_selectors[route]
+        css = card_rules(container, content) + additional_css
+    if '</style>' not in scene:
+        raise ValueError('Native card style layout changed')
+    scene_path.write_text(scene.replace('</style>', css + '\n        </style>', 1), encoding='utf-8')
+
+
 def render(args):
     payload=Path(args.brief).read_bytes();b=validate_brief(payload);paths,pins=check_runtime(Path(args.project_root),dict(node=args.node,ffmpeg=args.ffmpeg,ffprobe=args.ffprobe))
     if any(pins[k]!=getattr(args,k+'_sha256') for k in ('node','ffmpeg','ffprobe')):raise ValueError('Bound renderer executables changed')
@@ -145,6 +256,7 @@ def render(args):
                 allowed={'vendor/gsap.min.js',*[x['scene_path'] for x in b['assets']]}
                 if any(u not in allowed for u in urls) or re.search(r'fetch\s*\(|https?://|<audio|<video|@import',text.replace('http://www.w3.org/2000/svg','')):raise ValueError('Native entry must use only frozen local assets and no audio/network')
             p=d/r['scene_path'];p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+        size_native_cards(d, b)
         native=d/('native.mov' if b['composition']['alpha'] else 'native.mp4');target=d/('target.mov' if b['composition']['alpha'] else 'target.mp4')
         output_format='mov' if b['composition']['alpha'] else 'mp4'
         argv=[str(paths['node']),str(paths['cli']),'render',str(d),'--composition','index.html','--output',str(native),'--format',output_format,'--fps','24','--quality','delivery','--workers','1','--low-memory-mode','--no-browser-gpu','--no-best-effort','--quiet']

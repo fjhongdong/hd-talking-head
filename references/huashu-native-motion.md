@@ -1,6 +1,6 @@
 # Huashu Art Motion 原生调用
 
-固定官方来源 `8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c`，使用完整原版 Skill。父级交接语义、完整原话、真实词钟、已有素材、画布和当前费用授权；原生流程负责设计、场景、材质、主题动作与技术 QA。不修改第三方文件。
+当前官方来源是 `a97c45018d46e950d56d61981138e08f4e092909` 的完整源码快照。父级交接语义、完整原话、真实词钟、已有素材、画布和当前费用授权；原生流程负责设计、场景、材质、主题动作与技术 QA。不修改第三方文件。
 
 当前入口为 `scripts/motion_native_skill_adapter.py`，schema 2 brief、schema 3 result、producer 2.0.0。依赖 ID 为 `huashu-art-motion`，输出按当前 composition 区分不透明视频或真实 alpha。`scripts/huashu_motion_adapter.py` 中的 `native_templates`、`native_workflow_instructions`、`prepare_native_project` 和 `native_render_command` 只做原生调用接缝，不再作为旧固定模板的生产入口。
 

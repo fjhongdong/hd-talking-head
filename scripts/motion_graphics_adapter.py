@@ -93,7 +93,7 @@ def validate_brief(payload):
 def check_runtime(project_root):
     project = Path(project_root).resolve(strict=True)
     from hyperframes_runtime import resolve_runtime, resolve_tools
-    runtime = resolve_runtime(project / "runtime/hyperframes-0.8.167")
+    runtime = resolve_runtime(project / "runtime/hyperframes-0.9.100")
     tools, _ = resolve_tools()
     paths = {"cli": runtime["cli"], **{key: tools[key] for key in ("node", "ffmpeg", "ffprobe")}}
     return {**{key: str(value) for key, value in paths.items()},
@@ -141,7 +141,7 @@ def create_adapter(project_root, python_executable, brief_loader):
         approved_executor="reference_adapter", dependency_root=SKILL,
         entrypoint=ENTRY, entrypoint_sha256=entry_sha,
         producer_version=VERSION, primary_renderer="HyperFrames",
-        renderer_version="0.8.167", artifact_media_type="video",
+        renderer_version="0.9.100", artifact_media_type="video",
         launcher=node, launcher_sha256=sha(node), brief_loader=guard, media_loader=media,
         self_contained_wrapper=True,
         timeout_seconds=300,
@@ -161,7 +161,7 @@ def create_binding(adapter, brief_bytes, reference_sample):
         raise ValueError("Motion graphics adapter identity changed")
     return {"producer_type": "dependency", "dependency_id": DEPENDENCY_ID,
             "entrypoint": ENTRY, "producer_version": VERSION,
-            "primary_renderer": "HyperFrames", "renderer_version": "0.8.167",
+            "primary_renderer": "HyperFrames", "renderer_version": "0.9.100",
             "template_origin": "custom_fallback",
             "template_id": f"{DEPENDENCY_ID}/{b['template_request']['semantic_family']}",
             "template_version": VERSION, "adaptation_level": "structural",

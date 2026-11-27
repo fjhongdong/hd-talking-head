@@ -1,8 +1,8 @@
 {
   "schema_version": 3,
   "channel": "bb-video",
-  "repository_commit": "a21025a19d382b066ff354d877919be9d6863f97",
-  "counting_rule": "30 complete original styles under one BB Video channel. Explainer/promo workflows, quick/handwritten modes, kit verbs, topics and projects are internal choices, never extra templates.",
+  "repository_commit": "0b6e90e20cac5d64d55049dbc618abf9b3f87481",
+  "counting_rule": "37 registered original styles under one BB Video channel. Explainer/promo workflows, quick/handwritten modes, kit verbs, topics and projects are internal choices, never extra templates.",
   "native_option_ids": [
     "explainer",
     "promo"
@@ -181,6 +181,41 @@
       ]
     },
     {
+      "candidate_id": "bb-video:bb-video/cutaway",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/cutaway/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/cutaway/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/cutaway",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "剖视图解",
+      "signature_features": "单一三维物体剖开后连续飞行，逐个聚焦内部部件和动作，说明简化之处。",
+      "best_for": "内部结构、器官和产品拆解",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/cutaway.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/cutaway/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/cutaway/index.html"
+      ],
+      "limitations": [
+        "需要可核实的内部结构及各部件作用；原生短片建议 4–5 个停靠点；三维路线需可用 Three.js。"
+      ]
+    },
+    {
       "candidate_id": "bb-video:bb-video/cutout",
       "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
       "native_instructions": [
@@ -250,6 +285,41 @@
       ]
     },
     {
+      "candidate_id": "bb-video:bb-video/drawnworld",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/drawnworld/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/drawnworld/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/drawnworld",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "线稿成世界",
+      "signature_features": "一支笔逐步画出同一张系统图，最后铺开颜色并让场景活动。",
+      "best_for": "多环节系统、城市、物流和原因联系",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/drawnworld.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/drawnworld/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/drawnworld/index.html"
+      ],
+      "limitations": [
+        "一幅画连续生长且最后汇总；主体和人物应为原创，事实数字需有来源。"
+      ]
+    },
+    {
       "candidate_id": "bb-video:bb-video/filmroom",
       "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
       "native_instructions": [
@@ -282,6 +352,41 @@
       ],
       "limitations": [
         "必须有经授权且可核实的真实录像；无素材时不能用重建动画替代。只讲画面支持的事实。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/goldenage",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/goldenage/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/goldenage/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/goldenage",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "美式黄金卡通",
+      "signature_features": "绘景背景配手绘赛璐璐角色，夸张形变和连锁反应推动故事。",
+      "best_for": "故障连锁、物理动作、创造力和角色故事",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/goldenage.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/goldenage/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/goldenage/index.html"
+      ],
+      "limitations": [
+        "使用原创角色和情节；需要明确动作与因果，不适合真实悲剧或密集数据。"
       ]
     },
     {
@@ -704,6 +809,41 @@
       "max_duration_seconds": 45
     },
     {
+      "candidate_id": "bb-video:bb-video/pencil",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/pencil/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/pencil/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/pencil",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "铅笔手绘动画",
+      "signature_features": "石墨线条与构造线在纸面连续变形，人物动作和机器轮廓逐步演化。",
+      "best_for": "身体动作、手工过程、机械演进和职业故事",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/pencil.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/pencil/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/pencil/index.html"
+      ],
+      "limitations": [
+        "人物使用不具真实肖像特征的动作形象；真实机械关系需正确，不描摹真实照片。"
+      ]
+    },
+    {
       "candidate_id": "bb-video:bb-video/pixel",
       "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
       "native_instructions": [
@@ -806,6 +946,41 @@
       ]
     },
     {
+      "candidate_id": "bb-video:bb-video/rubberhose",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/rubberhose/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/rubberhose/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/rubberhose",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "黑白橡皮管卡通",
+      "signature_features": "黑白颗粒画面中原创拟人物件以橡皮管肢体和节奏动作演绎。",
+      "best_for": "时间、重复习惯、机械过程和拟人故事",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/rubberhose.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/rubberhose/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/rubberhose/index.html"
+      ],
+      "limitations": [
+        "使用原创人物物件；动作跟随节奏，不用于真实伤害或高密度数据。"
+      ]
+    },
+    {
       "candidate_id": "bb-video:bb-video/shadow",
       "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
       "native_instructions": [
@@ -873,6 +1048,37 @@
       ],
       "limitations": [
         "使用原创可爱角色；不适合真实人物历史、数据新闻、暗调成人主题或UI导览。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/supercut",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/supercut/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/supercut/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/supercut",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "踩点混剪",
+      "signature_features": "真实素材随节奏硬切，居中文字持续推进并辅以网格和强调字。",
+      "best_for": "真实行动、氛围变化、创意作品和快节奏展示",
+      "native_option_ids": [
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/supercut.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/supercut/index.html"
+      ],
+      "limitations": [
+        "仅 promo 手写；需要具备使用许可的真实照片或视频及来源记录，须留足文字阅读时间。"
       ]
     },
     {
@@ -1013,6 +1219,41 @@
       ],
       "limitations": [
         "使用虚构片厂和原创人物剪影；不仿真电影标识。不适合密集教程、功能清单或长时间真实UI。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/watercolour",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/watercolour/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/watercolour/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/watercolour",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "水彩晕染",
+      "signature_features": "透明颜料在纸面晕开、叠色或褪去，画面由单张水彩构成。",
+      "best_for": "自然、生态、气候与缓慢变化",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/watercolour.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/watercolour/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/watercolour/index.html"
+      ],
+      "limitations": [
+        "需可用 WebGL2；涉及事实和数字需提供来源，不适合细密表格或精确机械结构。"
       ]
     },
     {

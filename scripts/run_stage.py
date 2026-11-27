@@ -148,15 +148,18 @@ def _review(job, stage: str, review: dict) -> dict:
 
 
 def run_speech_cleanup(job_dir: Path, project: Path, video_use_result: Path | None = None,
-                       invocation_path: Path | None = None, cleanup_plan: Path | None = None) -> dict:
-    from edit.hd.tools import speech_edit_v2, state, transcribe
+                       invocation_path: Path | None = None, cleanup_plan: Path | None = None,
+                       *, word_timing_review: dict | None = None) -> dict:
+    from edit.hd.tools import speech_edit_v2, state
     job = state.load_job(job_dir)
     generation = job_dir / '05-speech-cleanup'
     if video_use_result is not None:
         if invocation_path is None:
             return _summary(job, 'speech_cleanup', actions=[{'action':'provide_transcription_invocation', 'argument':'--invocation-json'}])
-        transcribe.transcribe_job(job, video_use_result=_path(job, video_use_result),
-                                 invocation=_json(_path(job, invocation_path)))
+        speech_edit_v2.prepare_transcription(
+            job, video_use_result=_path(job, video_use_result),
+            invocation=_json(_path(job, invocation_path)), word_timing_review=word_timing_review,
+        )
         job = state.load_job(job_dir)
     elif not (generation / 'report.json').is_file():
         return _summary(job, 'speech_cleanup', actions=[{'action':'provide_transcription_result', 'arguments':['--video-use-result', '--invocation-json']}])
@@ -501,11 +504,30 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         'from expression_basis.content when present. In a creative route, use the native workflow to '
         'design the staging so the subject is recognizable and its action or relationship carries the meaning. '
         'If the focus changes, make the new subject and its relationship visible and hold the result. '
+        'When timing is present, use it as the approved plan on the edited-body 24fps clock. '
+        'Map it to the native scene clock from the segment start. Begin the key action at action_start_frame '
+        'when supplied, make the required result clear by settled_frame, and keep it fully legible until '
+        'the exclusive visible_until_frame. Animate supporting elements around that plan. '
         'Use short labels for names, precise values or to clarify a generic icon with words from the spoken clause. '
-        'Use the actual presenter frame to place overlays clear of the face, key gestures and subtitles. '
+        'Design the first composition on the final portrait canvas with the actual presenter and parent safe areas. '
+        'The parent compositor centers standalone transparent overlay groups as a unit. Anchor callouts to '
+        'their subject. Keep the full movement clear of faces, key gestures, subtitles and the presenter inset. '
+        'Size cards from the wrapped text and its padding before animating them. '
+        'For authored HTML cards, apply hd-text-card to the body and hd-text-card-content to its editable text. '
+        'Set a minimum height if needed and put motion transforms on the outer layer. Include data-hd-text-cards on the '
+        'HTML root if JavaScript creates the cards. For supported authored React scenes, put a comment '
+        'containing hd-text-card in the entry if the marked component is imported. The renderer supplies the shared styles. '
+        'Give key source text a large reading area using original crops. Keep both passages fully visible together when their comparison '
+        'is the point. Cue each evidence change to its spoken beat and hold the text still to be read. '
+        'Use a fixed animation whose action and final visible state fit the spoken meaning. When a drawn person '
+        'carries the meaning, give them a natural pose and clear gesture. Use objects and their actions for '
+        'relationships they can express directly. '
         'Refer to the confirmed proposal for other rows using '
         'this route so each has a distinct treatment grounded in its own meaning. The native workflow '
         'owns creative design and its technical QA.')
+    onetake_targets = {(row['segment_id'], row['component_id'])
+                       for row in frozen_treatment.get('skill_selection', {}).get('assignments', [])
+                       if row['skill_id'] == 'onetake'}
     actions = []
     for sid, cid in sorted(pending):
         if (sid, cid) in blocked:
@@ -522,7 +544,13 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         strategy = segment['visual_strategy']
         zones, placement = subtitle_layout(strategy['mode'], strategy.get('composition', {}))
         action['parent_subtitle_layout'] = {'safe_zones': zones, 'placement': placement}
-        if segment.get('bindings', {}).get(cid, {}).get('producer_type') == 'dependency':
+        binding = segment.get('bindings', {}).get(cid, {})
+        if (sid, cid) in onetake_targets:
+            action['native_skill'] = str(project / 'vendor/onetake/SKILL.md')
+            action['native_integration'] = str(project / 'references/onetake-integration.md')
+            action['next'] += (' Read the OneTake Skill and integration guide, then author the scene using its original motion.js. '
+                               'Freeze index.html, the original library, the local assets and the workflow file in the OneTake brief.')
+        if binding.get('producer_type') == 'dependency':
             action['speech_input_contract'] = {
                 'argv_prefix': [shutil.which('ffmpeg') or 'ffmpeg', '-v', 'error', '-i',
                     str(job.job_dir / '06-edit-structure/edited-aroll.mp4'), '-ss', str(segment['start']),
@@ -803,7 +831,7 @@ def native_component_adapters(project: Path, job) -> dict:
     for dependency in sorted(dependencies):
         if dependency == 'hyperframes':
             runtime = _module('hyperframes_runtime').resolve_runtime(
-                project / 'runtime/hyperframes-0.8.167')['root']
+                project / 'runtime/hyperframes-0.9.100')['root']
             registry = {}
             for segment in plan['segments']:
                 for component in segment['shot_recipe']['components']:
@@ -956,7 +984,8 @@ def _execute_one_stage(job_dir: Path, project: Path, stage: str | None = None, *
         cover.prepare_cover(job, approved_preview=image, approved_preview_sha256=hashlib.sha256(image.read_bytes()).hexdigest(),
                             approved_preview_prompt=data['prompt'])
     elif stage == 'speech_cleanup':
-        result = run_speech_cleanup(job_dir, project, video_use_result, invocation_path, cleanup_plan)
+        result = run_speech_cleanup(job_dir, project, video_use_result, invocation_path, cleanup_plan,
+                                    word_timing_review=data.get('word_timing_review'))
         if ((job_dir / '05-speech-cleanup/cleanup-proposal.json').is_file()
                 and result.get('status') == 'ready' and not result.get('actions')):
             return _finish_stage(job_dir, stage)

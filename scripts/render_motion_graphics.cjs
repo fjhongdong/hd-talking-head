@@ -54,7 +54,7 @@ try {
   if (record.byte_length !== entryBytes.length) throw new Error('native-entry byte_length mismatch');
   privateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hd-motion-graphics-')); const compositions = path.join(privateDir, 'compositions'); fs.mkdirSync(compositions);
   fs.writeFileSync(path.join(compositions, 'index.html'), entryBytes); fs.writeFileSync(path.join(privateDir, 'hyperframes.json'), JSON.stringify({paths: {blocks: 'compositions'}}));
-  const nativePath = path.join(privateDir, 'native.mov'); const cli = path.join(projectRoot, 'runtime/hyperframes-0.8.167/node_modules/hyperframes/bin/hyperframes.mjs');
+  const nativePath = path.join(privateDir, 'native.mov'); const cli = path.join(projectRoot, 'runtime/hyperframes-0.9.100/node_modules/hyperframes/bin/hyperframes.mjs');
   const render = run(process.execPath, [cli, 'render', privateDir, '--composition', 'compositions/index.html', '--output', nativePath, '--format', 'mov', '--fps', '24', '--workers', '1', '--quality', 'delivery', '--low-memory-mode', '--no-browser-gpu', '--no-best-effort', '--quiet'], {cwd: privateDir, timeout: 240000, env: {...process.env, HYPERFRAMES_BROWSER_PATH: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', HYPERFRAMES_NO_TELEMETRY: '1', DO_NOT_TRACK: '1'}});
   if (render.status !== 0 || !fs.existsSync(nativePath)) throw new Error(`HyperFrames render failed: ${render.stderr}`);
   const nativeProbe = assertNative(nativePath, expected); const nativeAlpha = alphaRange(nativePath, Math.floor(expected.frames / 2));

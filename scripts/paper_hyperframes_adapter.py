@@ -12,7 +12,7 @@ if __file__ != '<stdin>':
  from package_paths import PACKAGE_ROOT
 hf=None; check_motion=None; ENTRY_PATH=None; SKILL=PACKAGE_ROOT if __file__!='<stdin>' else None
 ENTRY='scripts/paper_hyperframes_adapter.py'; DEPENDENCY_ID='paper-collage-hyperframes'; VERSION='2.0.0'; ROUTE='paper-collage-ad/hyperframes'
-SHARED_SHA='f3c3729b5e262716bcd0ef3e8a73a3c6860282441a4bad325b0c3a29339e5c26'
+SHARED_SHA='c111d0234becc93a280c2e61f323c1abf08cb868c10cd982b2f94bdac45d4855'
 UPSTREAM_COMMIT='a69c9f56eec57ca19d1c02f6bdcffe573b4324a8'
 READ_FILES=('SKILL.md','references/hyperframes-route.md','references/collage-dimensions.md','references/prompt-patterns.md','references/production-workflow.md','references/dependencies.md','examples/hyperframes-logo-composition.html')
 def _ensure(project,skill_root=None):

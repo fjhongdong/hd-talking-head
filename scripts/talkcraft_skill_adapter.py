@@ -32,9 +32,9 @@ from edit.hd.tools.startup import require_job_directory_identity
 ENTRY = 'scripts/talkcraft_skill_adapter.py'
 DEPENDENCY_ID = 'video-talkcraft'
 VERSION = '1.0.0'
-UPSTREAM_COMMIT = 'ccb8a571f4bd620b5588bef4b264b5120f5042fc'
+UPSTREAM_COMMIT = '57300498a46db6e55a3d824f5555265da1e5c9cd'
 SOURCE_RECORD = 'references/talkcraft-native-source.json'
-SOURCE_RECORD_SHA256 = '2050fa158722e8d88ce62f041eba553ee900e335882e878215fbb3192a6262c2'
+SOURCE_RECORD_SHA256 = '4e144cd7ae0b0d53eee22dc560208383c68a61f069ae3de022d3a291d6a2f8d0'
 SOURCE_ROOT = 'vendor/talkcraft'
 NATIVE_RENDER = 'scripts/render_shots.mjs'
 
@@ -237,7 +237,7 @@ def native_task(job, recipe, component, brief_path, *, defer_runtime=False):
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, record['job_path'])) for record in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': ('Before native execution, use runtime.check_argv for an already prepared environment; otherwise run runtime.prepare_argv once and use its real checked output for all paths and tools. A pending runtime is not readiness evidence. ' if defer_runtime else '') + 'Read the complete native Skill and original recipe. The native Skill owns SHOTBOOK, composition, card CONFIG, scene code and QA. Link the project node_modules to runtime.node_modules and pass runtime.browser to the original renderer. Use the approved voice and word times; do not re-edit speech or create new voice, subtitles or paid assets. Keep the pinned Skill files unchanged. Author only the Job native project, use its original render_shots.mjs through capture_render, then publish_completed with the actual execution evidence. This action is pending work, not a completed result.'}
+            'next': ('Before native execution, use runtime.check_argv for an already prepared environment; otherwise run runtime.prepare_argv once and use its real checked output for all paths and tools. A pending runtime is not readiness evidence. ' if defer_runtime else '') + 'Read the complete native Skill and original recipe. The native Skill owns SHOTBOOK, composition, card CONFIG, scene code and QA. In authored TSX, use className="hd-text-card" for each editable text card and className="hd-text-card-content" for its text container; the shared stylesheet is installed before capture and sizes the card from its content. Keep content in normal flow, retain padding and let nearby cards flow without overlap. Link the project node_modules to runtime.node_modules and pass runtime.browser to the original renderer. Use the approved voice and word times; do not re-edit speech or create new voice, subtitles or paid assets. Keep the pinned Skill files unchanged. Author only the Job native project, use its original render_shots.mjs through capture_render, then publish_completed with the actual execution evidence. This action is pending work, not a completed result.'}
 
 
 def probe(video):
@@ -306,10 +306,16 @@ def capture_render(job_dir, brief_path, argv):
     output = output if output.is_absolute() else directory / 'remotion' / output
     if not output.resolve().is_relative_to(directory.resolve()):
         raise ValueError('TalkCraft render must preserve previous projects and output')
-    before = project_files(root, directory)
     record_path = path(root, str(Path(brief['result_record_path']).parent / 'render-call.json'))
     if record_path.exists() or output.exists():
         raise ValueError('TalkCraft render evidence/output already exists; use a new revision directory')
+    from text_card_layout import install_react_card_css
+    source_directory = remotion_root / 'src'
+    if not source_directory.resolve(strict=True).is_relative_to(directory.resolve(strict=True)):
+        raise ValueError('TalkCraft authored source must belong to the current native project')
+    for entry in sorted(source_directory.rglob('*.tsx')):
+        install_react_card_css(source_directory, entry.relative_to(source_directory))
+    before = project_files(root, directory)
     result = subprocess.run(argv, cwd=directory / 'remotion', capture_output=True, text=True, timeout=600)
     if before != project_files(root, directory):
         raise ValueError('TalkCraft project source changed during native rendering')

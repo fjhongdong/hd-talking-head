@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "channel": "garden-motion-showreel",
-  "repository_commit": "2b9a89340b70f632d31c0f1c69fce94a7912423e",
+  "repository_commit": "f2d7adeaf53dcce3d0eb19cbffe8c04f4c636c2a",
   "native_paths": [
     {
       "candidate_id": "garden-motion-showreel:garden-motion-showreel/swiss-editorial",

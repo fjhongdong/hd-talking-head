@@ -119,7 +119,6 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
 _NON_NATIVE_PRODUCERS = frozenset({
     "hd-talking-head-local-canonical", "hd-talking-head-relation-motion",
     "hd-talking-head-semantic-state", "hd-talking-head-talkcraft-overlay",
-    "onetake",
 })
 
 
@@ -156,14 +155,15 @@ def _native_selection(candidate: Mapping[str, Any]) -> bool:
                 and candidate.get("source_entrypoint") == "scripts/lemo_wake_adapter.py"
                 and candidate.get("producer_version") == "2.0.0"
                 and template_id == "lemo-wake/wake")
-    if candidate.get("dependency_id") == "lemo-opuscar":
-        from upstream_scene_adapter import ENTRY, VERSION, lemo_styles
-        root = PACKAGE_ROOT
+    dependency = candidate.get("dependency_id")
+    if dependency in {"lemo-opuscar", "onetake"}:
+        from upstream_scene_adapter import ENTRY, ONETAKE_TEMPLATE_ID, VERSION, lemo_styles
         return (candidate.get("template_origin") == "custom_fallback"
                 and candidate.get("adaptation_level") == "structural"
                 and candidate.get("source_entrypoint") == ENTRY
                 and candidate.get("producer_version") == VERSION
-                and template_id in {"lemo-opuscar/" + slug for slug in lemo_styles(root)})
+                and (template_id == ONETAKE_TEMPLATE_ID if dependency == "onetake" else
+                     template_id in {"lemo-opuscar/" + slug for slug in lemo_styles(PACKAGE_ROOT)}))
     if isinstance(template_id, str) and template_id.startswith("hd-talking-head/talkcraft/"):
         return _is_qualified_talkcraft(candidate)
     origin = candidate.get("template_origin")
@@ -233,7 +233,7 @@ CAPABILITY_REGISTRY: Dict[str, Dict[str, Any]] = {
         ),
     },
     "video-use": {
-        "directory": "video-use-runtime",
+        "directory": "video-use",
         "role": "audio-clock-ffmpeg-boundary-qa",
         "load": "lazy",
         "entrypoints": ("helpers/render.py", "SKILL.md"),
@@ -657,17 +657,19 @@ def _validate_code_cross_fields(
                 or component.get("template_origin") != "custom_fallback"
                 or component.get("adaptation_level") != "structural"):
             raise RouterError("OpenFilm is a native creative Skill, not a verified template")
-    if dependency_id == "lemo-opuscar":
+    if dependency_id in {"lemo-opuscar", "onetake"}:
         from upstream_scene_adapter import ENTRY, SOURCES, VERSION
         if (not _native_selection(component) or entrypoint != ENTRY
                 or component.get("renderer_version") != SOURCES[dependency_id][0]
                 or component.get("template_version") != VERSION):
-            raise RouterError("Lemo requires a registered official style and its native creation entry")
+            raise RouterError("Upstream scene requires its registered native entry and source version")
         evidence = record.get("production_evidence", {})
+        if evidence.get("dependency_id") != dependency_id or evidence.get("upstream_commit") != SOURCES[dependency_id][0]:
+            raise RouterError("Upstream scene differs from the frozen production evidence")
+    if dependency_id == "lemo-opuscar":
         slug = component["template_id"].removeprefix("lemo-opuscar/")
         if (record.get("style_slug") != slug or evidence.get("style_slug") != slug
-                or evidence.get("template_id") != component["template_id"]
-                or evidence.get("upstream_commit") != SOURCES[dependency_id][0]):
+                or evidence.get("template_id") != component["template_id"]):
             raise RouterError("Lemo style differs from the frozen production evidence")
     if dependency_id == "lemo-wake":
         if (not _native_selection(component)
@@ -1067,11 +1069,11 @@ def _compile_shot_recipe(
                     and (approved_component["layer_role"] != "annotation"
                          or approved["composition"]["family"] != "aroll_with_overlay")):
                 raise RouterError("Native pin-board, single stat and callout are A-roll annotations, not B-roll")
-            if (binding.get("dependency_id") == "openfilm-motion-graphics"
+            if (binding.get("dependency_id") in {"openfilm-motion-graphics", "onetake"}
                     and (approved_component["layer_role"] != "base"
                          or approved_component["layout_slot"] != "full_frame"
                          or approved["composition"]["family"] == "aroll_with_overlay")):
-                raise RouterError("OpenFilm currently supplies opaque full-frame B-roll only")
+                raise RouterError("The selected native scene supplies opaque full-frame B-roll only")
             if component_id in template_candidates:
                 request = _as_dict(template_candidates[component_id], "template candidates")
                 if set(request) != {"semantic_family", "information_units", "candidates"}:

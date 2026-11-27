@@ -27,10 +27,22 @@ SHOTBOOK 机器可读约定（cinematography.md §4）：
   SHOTBOOK   缺「素材：」行 / 声明了 V·图·截图却无路径 / 路径不存在 → FAIL；全片零 V·图 → FAIL（只有动效 + 口播 = PPT 感，SKILL.md ③ 硬规）；
              V·图 镜头占比 < --min-footage-ratio → WARN；缺「未完成 / 未采集清单」节 → FAIL；sources.md 不存在 → FAIL
              纯文字镜（素材只有 文）层矩阵里没有 G5 线稿示意图行 → WARN（章节卡除外；references/schematic.md）
+  语义覆盖   semantics.json（②-1）里每一句都必须归到本 SHOTBOOK 的镜头（空 / 未知 shot → FAIL，否则那些句被静默跳过）；
+             语义里 自我介绍 / 介绍他人 / 号召 在该镜蒙皮行里没有对应语义的卡 → FAIL（这三类有专设卡族、无替代物）；
+             数据 / 引用 / 对比 / 定义 / 步骤 / 列举 / 时间地点 / 机制 / 选择 / 过程演示 / 空间叙事 / 设问 / 金句 / 章节 → WARN；
+             该镜写了 `- 语义偏离：<语义> ← 理由` 的放行。素材行声明了 V/图/截图 却没有一张吃素材的卡（呈现 / 运镜类，素材裸贴）→ FAIL。
+             没有 semantics.json 时只对 --script 做词法兜底（我是 X / 点赞订阅 → 全片无对应语义卡 → WARN）。
+  版式轮换   只按各镜「蒙皮行」（列表行或表格行）里的卡名核，没有蒙皮行的镜 WARN 且不计入（正文抄进来的"已知坑"卡名不算）：
+             呈现类卡（素材呈现 / 数据信息图 / 运镜）连用 ≥3 镜 → FAIL、全片占比 > 1/3 → FAIL（≥6 镜的片）；
+             其它类别（字幕花字 / 强调标注 / 人物互动）连用 ≥3 镜 → WARN、占比 > 1/2 → WARN；转场结构类不核；人物形态只由节奏表核（角标是默认路）；
+             「版式行」逐字相同 ≥3 镜 → WARN；同一 B-roll 文件（不分大小写）用在 ≥3 镜或相邻两镜 → WARN；
+             G0「版式节奏表」缺失（≥6 镜）→ WARN、表内连续 ≥3 镜同人物形态 + 同素材容器 → FAIL、素材容器 <3 种（≥8 镜）→ WARN
+             （2026-09-21 用户反馈：11 镜里 8 镜同一张 60/40 卡 + 左下圆章，"排版太固定"；规则正主 cinematography.md §4.5 第 9 条）
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -43,6 +55,11 @@ IMAGE_EXT = (".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif")
 STD_FPS = (23.976, 24, 25, 29.97, 30, 50, 59.94, 60)
 
 results: list[tuple[str, str, str]] = []  # (level, section, message)
+SEM_PATH: list[str | None] = [None]      # --semantics（②-1 语义标注）
+SCRIPT_PATH: list[str | None] = [None]   # --script（没有语义标注时的词法兜底）
+SKILL_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CARDS_DIR = os.path.join(SKILL_ROOT, "references", "cards")   # 卡的「类别:」从这里读（版式轮换按类别分档）
+CARDS_INDEX = os.path.join(SKILL_ROOT, "references", "cards-index.json")  # 卡的「语义 / 输入」从这里读（scripts/cards_index.py 生成）
 
 
 def rec(level: str, section: str, msg: str) -> None:
@@ -179,7 +196,7 @@ SHOT_HEAD = re.compile(r"^#{2,4}\s+([SsVv]\d+[A-Za-z0-9_']*)\b")
 HEADING = re.compile(r"^(#{1,6})\s")          # 任意 markdown 标题：与镜头标题同级或更高的非镜头标题 = 该镜正文结束
 MEDIA_LINE = re.compile(r"^\s*[-*]?\s*\**素材\**\s*[:：]\s*(.+)$")
 UNFINISHED_HEAD = re.compile(r"^#{2,4}\s+.*未完成")
-TOKEN = re.compile(r"(B-roll|b-roll|V|图片|图|截图|页|界|文|人|纯动效)\s*(?:[（(]([^）)]*)[）)])?")
+from shotbook_parse import TOKEN  # noqa: E402  与 card_match 共用一份代号表（含 B-roll / 图片 / 页 别名）
 FOOTAGE_MODES = {"V", "B-roll", "b-roll", "图", "图片"}
 PATH_MODES = FOOTAGE_MODES | {"截图", "页"}
 
@@ -216,6 +233,394 @@ def resolve_path(root: str, p: str) -> str | None:
         if os.path.exists(full):
             return cand
     return None
+
+
+# ---- 版式轮换（cinematography.md §4.5 第 9 条；2026-09-21 用户反馈"排版太固定"：11 镜 8 镜同一张 60/40 卡 + 左下圆章）----
+# 列表行 `- 蒙皮行：…` 与表格行 `| 蒙皮行 | … |` 都认（cinematography §4 层矩阵是表格，蒙皮行常与版式行并列写进表里）
+from shotbook_parse import SKIN_LINE, SLUG  # noqa: E402  蒙皮行 / 卡名正则同源
+LAYOUT_LINE = re.compile(r"^\s*(?:[-*]\s*)?\|?\s*\**版式行\**\s*(?:[:：]|\|)\s*(.+?)\s*\|?\s*$")
+PRESENT_CATS = {"素材呈现", "数据信息图", "运镜"}               # 呈现类：决定"这一镜长什么样"，连用 / 占比 FAIL
+# 人物互动不在内：角标（host-shrink-to-chip）是 host-footage §5 的默认路，满片都有是正常的——人物形态由 G0 节奏表核；字卡 / 标注类复用得多一点只 WARN
+_cat_cache: dict[str, str | None] = {}
+
+
+def card_category(slug: str) -> str | None:
+    """references/cards/<slug>.md 头部的「类别:」；不是库内卡 → None"""
+    if slug not in _cat_cache:
+        cat = None
+        p = os.path.join(CARDS_DIR, slug + ".md")
+        if os.path.exists(p):
+            cat = "?"
+            with open(p, encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("类别:"):
+                        cat = line.split(":", 1)[1].strip()
+                        break
+        _cat_cache[slug] = cat
+    return _cat_cache[slug]
+
+
+def shot_cards(shot: dict) -> tuple[list[str], bool]:
+    """该镜用了哪些卡：只认「蒙皮行」里 → 之前的卡名（列表行或表格行）。没有蒙皮行 → ([], False)，不按正文估算——
+    正文里抄进来的"已知坑 / 不用 X 换 Y"会把没用的卡算成用了（2026-09-21 评审 P1-5）"""
+    for line in shot["body"]:
+        m = SKIN_LINE.match(line)
+        if m:
+            # 先剥括号再切箭头：括号里的「（半身→右下角标）」会把后面的卡整段截断（2026-09-22 复核 P1-R2）
+            slugs = [x for x in SLUG.findall(skin_head(m.group(1))) if card_category(x)]
+            return list(dict.fromkeys(slugs)), True
+    return [], False
+
+
+def parse_rhythm_table(text: str) -> list[tuple[str, str, str, str]]:
+    """G0「版式节奏表」：表头含「形态」与「容器」两列（列序任意，按表头定位），行 `| sNN | 人物形态·方位 | 素材容器 | 主卡 |`（cinematography.md §4）"""
+    rows: list[tuple[str, str, str, str]] = []
+    cols: tuple[int, int, int | None] | None = None   # (形态列, 容器列, 主卡列)
+    for line in text.splitlines():
+        st = line.strip()
+        if not st.startswith("|"):
+            cols = None
+            continue
+        cells = [c.strip() for c in st.strip("|").split("|")]
+        if cols is None:
+            fi = next((i for i, c in enumerate(cells) if "形态" in c), None)
+            ci = next((i for i, c in enumerate(cells) if "容器" in c), None)
+            if len(cells) >= 3 and fi is not None and ci is not None:
+                ki = next((i for i, c in enumerate(cells) if "卡" in c and i not in (fi, ci)), None)
+                cols = (fi, ci, ki)
+            continue
+        if all(set(c) <= set("-: ") for c in cells):
+            continue                                   # 表头分隔行
+        fi, ci, ki = cols
+        if len(cells) > max(fi, ci) and re.match(r"^[sSvV]\d+", cells[0]):
+            rows.append((cells[0].lower(), cells[fi], cells[ci], cells[ki] if ki is not None and ki < len(cells) else ""))
+    return rows
+
+
+def check_variety(shots: list[dict], text: str) -> None:
+    """全片一个样的三种表现都量：同一张卡连用 / 占比，版式行复制，同一条素材反复用，人物形态 × 容器连续不换"""
+    sec = "版式轮换"
+    n = len(shots)
+    ids = [s["id"].lower() for s in shots]
+    cards_of: dict[str, list[str]] = {}
+    no_skin: list[str] = []
+    for s in shots:
+        slugs, from_skin = shot_cards(s)
+        cards_of[s["id"].lower()] = slugs
+        if not from_skin:
+            no_skin.append(s["id"])
+    if no_skin:
+        rec("WARN", sec, f"{len(no_skin)} 镜没有「蒙皮行」，未计入版式轮换核对：{' '.join(no_skin)}（SKILL.md ④：每镜蒙皮行 `卡名, 卡名 → 改了什么皮`，列表行或表格行均可）")
+    all_slugs = sorted({x for v in cards_of.values() for x in v})
+
+    # 1) 连用：同一张卡出现在 ≥3 个相邻镜头——呈现类 FAIL，其它类别 WARN（字卡 / 标注 / 人物互动可以复用得多一点），转场结构不核
+    for slug in all_slugs:
+        cat = card_category(slug)
+        if cat == "转场结构":
+            continue
+        run_start = None
+        for i, sid in enumerate(ids + [None]):
+            hit = sid is not None and slug in cards_of[sid]
+            if hit and run_start is None:
+                run_start = i
+            elif not hit and run_start is not None:
+                run = i - run_start
+                if run >= 3:
+                    if cat in PRESENT_CATS:
+                        rec("FAIL", sec, f"「{slug}」（{cat}）连用 {run} 镜（{ids[run_start]}–{ids[i - 1]}）——同一张呈现卡连用 ≥3 镜观众读作\"又是这个\"；"
+                                         f"第 3 镜起换式（shot-design.md §2⑦ 单条 B-roll 七式 / §2④′ 关系表；规则 cinematography.md §4.5 第 9 条）")
+                    else:
+                        rec("WARN", sec, f"「{slug}」（{cat}）连用 {run} 镜（{ids[run_start]}–{ids[i - 1]}）——非呈现类可复用，但连着三镜同一种字卡 / 标注也会腻，看看能否换一式")
+                run_start = None
+
+    # 2) 占比：呈现类卡全片 ≤1/3（FAIL）；其它类别 ≤1/2（WARN）
+    if n >= 6:
+        for slug in all_slugs:
+            cnt = sum(1 for v in cards_of.values() if slug in v)
+            share = cnt / n
+            cat = card_category(slug)
+            if cat == "转场结构":
+                continue
+            if cat in PRESENT_CATS and share > 1 / 3:
+                rec("FAIL", sec, f"「{slug}」（{cat}）出现在 {cnt}/{n} 镜 = {share:.0%} > 1/3——一张呈现卡撑不起半部片；"
+                                 f"按口播关系换容器（出血全屏 / 装框 / 分屏 / 多图编排 / 3D 运镜 / 底床），见 shot-design.md §2⑦")
+            elif cat not in PRESENT_CATS and share > 1 / 2:
+                rec("WARN", sec, f"「{slug}」（{cat}）出现在 {cnt}/{n} 镜 = {share:.0%} > 1/2——同一种字卡 / 标注满片飞也是单调，换一两式")
+
+    # 3) 版式行逐字复制
+    layouts: dict[str, list[str]] = {}
+    for s in shots:
+        for line in s["body"]:
+            m = LAYOUT_LINE.match(line)
+            if m:
+                layouts.setdefault(re.sub(r"\s+", "", m.group(1)), []).append(s["id"])
+                break
+    for key, sids in layouts.items():
+        if len(sids) >= 3:
+            rec("WARN", sec, f"{len(sids)} 镜的「版式行」逐字相同（{' '.join(sids)}）——版式行是这一镜实测的栏跨度 / 包围盒 / 字阶，复制粘贴 = 没有为它排版（layout.md §9）")
+
+    # 4) 同一条 B-roll / 图片文件反复用
+    files: dict[str, list[str]] = {}
+    for s in shots:
+        if not s["media"]:
+            continue
+        for mode, paths in TOKEN.findall(s["media"]):
+            if mode in FOOTAGE_MODES:
+                for pp in re.split(r"[,，、\s]+", paths or ""):
+                    if pp:
+                        files.setdefault(os.path.basename(pp.strip("`'\"")).lower(), []).append(s["id"].lower())  # macOS 不分大小写
+    for f, sids in files.items():
+        uniq = list(dict.fromkeys(sids))
+        adjacent = [f"{a}→{b}" for a, b in zip(uniq, uniq[1:]) if ids.index(b) - ids.index(a) == 1]
+        if len(uniq) >= 3 or adjacent:
+            rec("WARN", sec, f"素材「{f}」用在 {len(uniq)} 镜（{' '.join(uniq)}）" + (f"，相邻复用 {' '.join(adjacent)}" if adjacent else "")
+                             + "——同一条实拍反复出现观众记得；换素材、换取景段（ffmpeg -ss 截不同段）或写进未完成清单说明来源受限")
+
+    # 5) G0 版式节奏表：人物形态 × 素材容器 的全片节奏
+    rows = parse_rhythm_table(text)
+    containers: set[str] = set()
+    if not rows:
+        if n >= 6:
+            rec("WARN", sec, "G0 缺「版式节奏表」（| 镜 | 人物形态·方位 | 素材容器 | 主卡 |，cinematography.md §4）——全片节奏摊在一张表里才看得出\"八镜一个样\"；写完再展开逐镜矩阵")
+        if not any(lv == "FAIL" and sc == sec for lv, sc, _ in results):
+            rec("PASS", sec, f"版式轮换：{len(all_slugs)} 张卡 · 无呈现卡 ≥3 镜连用 / >1/3 占比（未给节奏表，人物形态 × 容器未核）")
+        return
+    norm = lambda x: re.sub(r"[\s·・,，/]+", "", x)  # noqa: E731
+    run_start = 0
+    for i in range(1, len(rows) + 1):
+        same = i < len(rows) and norm(rows[i][1]) == norm(rows[run_start][1]) and norm(rows[i][2]) == norm(rows[run_start][2])
+        if same:
+            continue
+        run = i - run_start
+        if run >= 3:
+            rec("FAIL", sec, f"版式节奏表：{rows[run_start][0]}–{rows[i - 1][0]} 连续 {run} 镜同人物形态「{rows[run_start][1]}」+ 同素材容器「{rows[run_start][2]}」"
+                             f"——第 3 镜必须换其一（人物：半身 / 角标 / 分屏格内 / 短暂离场；容器：出血 / 装框 / 分屏 / 底床 / 多图 / 3D）")
+        run_start = i
+    containers = {norm(r[2]) for r in rows if norm(r[2])}
+    if len(rows) >= 8 and len(containers) < 3:
+        rec("WARN", sec, f"版式节奏表：{len(rows)} 镜只用了 {len(containers)} 种素材容器（{' / '.join(sorted(containers))}）——≥8 镜的片至少三种")
+    missing = [x for x in ids if x not in {r[0] for r in rows}]
+    if missing:
+        rec("WARN", sec, f"版式节奏表缺镜：{' '.join(missing)}")
+    if not any(lv == "FAIL" and sc == sec for lv, sc, _ in results):
+        rec("PASS", sec, f"版式轮换：{len(all_slugs)} 张卡 · {len(containers)} 种素材容器 · 无 ≥3 镜连用")
+
+
+# ---- 语义 / 素材覆盖（2026-09-22 用户指出的通用缺陷：稿子的语义从不被标注，所以"该摆的卡在不在"没人查）----
+# 解析口径与 card_match 共用 shotbook_parse（评审 P1-1：两份正则对 `素材：B-roll（…）` 解析不一致，裸贴闸静默失效）
+from shotbook_parse import has_frame, is_carrier, skin_head  # noqa: E402
+from shotbook_parse import FAMILY as SEM_FAMILY  # noqa: E402
+from shotbook_parse import deviations as sb_deviations  # noqa: E402
+from shotbook_parse import media_kinds, shot_cards as sb_shot_cards, shot_picks  # noqa: E402
+from semantic_annotate import CTA_RE, HARD_SEM, SOFT_SEM, is_self_intro  # noqa: E402  词法规则与语义分档只有一份
+
+LONG_SHAPES = {"长图", "界面"}
+
+
+def load_card_index() -> dict[str, dict] | None:
+    if not os.path.exists(CARDS_INDEX):
+        return None
+    try:
+        return {c["slug"]: c for c in json.load(open(CARDS_INDEX, encoding="utf-8"))["cards"]}
+    except Exception:
+        return None
+
+
+def check_semantics(root: str, shots: list[dict], sem_path: str | None, script_path: str | None) -> None:
+    """主句语义 → 该镜蒙皮行里必须有一张语义包含它的卡；素材行声明的 V/图/截图 必须有呈现 / 运镜类卡承接（裸贴 = FAIL）。
+    没有 semantics.json 时退化成对口播稿的词法兜底（只 WARN）。"""
+    sec = "语义覆盖"
+    idx = load_card_index()
+    if idx is None:
+        rec("FAIL", sec, f"卡索引读不到或损坏：{os.path.relpath(CARDS_INDEX, SKILL_ROOT)}——闸的依据不在场就不能放行；"
+                         f"在 skill 仓库跑 `python3 scripts/cards_index.py --write` 生成")
+        return
+
+    # ① 素材承接：本镜声明了实拍 / 图片 / 截图，就得有一张吃这类输入的**呈现 / 运镜 / 数据信息图 / 强调标注**类卡
+    #    （吃「图」的卡按各卡 md 的 <Img> ↔ <OffthreadVideo> 换法也能承接实拍，所以按家族判定；
+    #     但转场结构（素材只是被扫过的背景）与字幕花字类不算承接——评审 P2-3）
+    bare, framed, long_warn, no_skin = [], [], [], []
+    declared = 0
+    for s in shots:
+        if not s["media"]:
+            continue
+        kinds, _paths = media_kinds(s["media"])
+        fam = kinds & SEM_FAMILY
+        if not fam:
+            continue
+        declared += 1
+        slugs, has_skin = sb_shot_cards(s)
+        if not has_skin:
+            no_skin.append(f"{s['id']}({'/'.join(sorted(fam))})")
+            continue
+        carriers = [g for g in slugs if g in idx and is_carrier(idx[g])]
+        if not carriers:
+            (framed if has_frame(s.get("body", [])) else bare).append(f"{s['id']}({'/'.join(sorted(fam))})")
+            continue
+        if "截图" in fam and not any(set(idx[g].get("material_shape") or []) & LONG_SHAPES for g in carriers):
+            long_warn.append(s["id"])
+    if no_skin:
+        rec("FAIL", sec, f"{len(no_skin)} 镜声明了素材却没有「蒙皮行」：{' '.join(no_skin)}——缺蒙皮行时语义 / 承接都无从核，"
+                         f"不能当豁免（评审 P1-4：删一行就能过闸）")
+    if bare:
+        rec("FAIL", sec, f"{len(bare)} 镜的素材没有呈现 / 运镜类卡承接：{' '.join(bare)}——素材只能裸贴"
+                         f"（design-language §1.3：单视频镜要包 ThemeFrame，图 / 截图 要进呈现卡或运镜卡）；"
+                         f"候选看 `scripts/card_match.py` 的「素材承接」行")
+    if framed:
+        rec("WARN", sec, f"{len(framed)} 镜没有承接卡，但正文提到了主题边框（ThemeFrame / 杂志框…）：{' '.join(framed)}——"
+                         f"当作「已包框的单视频镜」放行，请确认画面不是裸贴")
+    if long_warn:
+        rec("WARN", sec, f"{len(long_warn)} 镜声明了截图 / 长图，但承接卡的素材形态里没有 长图 / 界面：{' '.join(long_warn)}——"
+                         f"长页要「滚 / 巡 / 放大」地拍（SKILL ③），一屏装不下的静态贴屏是缺陷")
+    passed = declared - len(bare) - len(no_skin) - len(framed)
+    if declared and not bare and not no_skin:
+        rec("PASS", sec, f"声明了实拍 / 图片 / 截图的 {declared} 镜里，{passed} 镜有呈现 / 运镜类卡承接"
+                         + (f"，其余 {len(framed)} 镜按「已包边框」放行（见上条 WARN）" if framed else ""))
+
+    # ② 语义覆盖
+    if not sem_path or not os.path.exists(sem_path):
+        if not script_path or not os.path.exists(script_path):
+            rec("WARN", sec, "没有 semantics.json（②-1 语义标注）也没有 --script：语义覆盖只能跳过——"
+                             "选卡回到凭印象挑，2026-09-21 那支片的自我介绍就是这样漏掉人名条的")
+            return
+        text = open(script_path, encoding="utf-8").read()
+        all_sem: set[str] = set()
+        for s in shots:
+            for g in sb_shot_cards(s)[0]:
+                if g in idx:
+                    all_sem |= set(idx[g]["semantics"])
+        for w, hit, what in (("自我介绍", any(is_self_intro(l) for l in re.split(r"[\n。！？!?]", text)), "「我是 / 我叫 X」"),
+                             ("号召", bool(CTA_RE.search(text)), "「点赞 / 订阅 / 三连」")):
+            if hit and w not in all_sem:
+                rec("WARN", sec, f"口播稿里有{what}，全片却没有一张「{w}」语义的卡（taxonomy 语义索引里挑）——"
+                                 f"做 ②-1 语义标注后这条会升级成逐镜 FAIL")
+        rec("INFO", sec, "只做了词法兜底；semantics.json 在册才能逐镜核覆盖")
+        return
+
+    try:
+        doc = json.load(open(sem_path, encoding="utf-8"))
+        sents = doc["sentences"]
+    except Exception as e:
+        rec("FAIL", sec, f"semantics.json 读不出来：{e}（跑 scripts/semantic_annotate.py 校验）")
+        return
+    if not isinstance(sents, list) or not sents:
+        rec("FAIL", sec, f"semantics.json 的 sentences 不是非空数组（拿到 {type(sents).__name__}）——跑 scripts/semantic_annotate.py 校验")
+        return
+    by_shot: dict[str, list[dict]] = {}
+    exempted: list[str] = []
+    for x in sents:
+        if not isinstance(x, dict):
+            rec("FAIL", sec, f"semantics.json 里有句不是对象：{str(x)[:40]}")
+            return
+        by_shot.setdefault(str(x.get("shot", "")).lower(), []).append(x)
+        for w, why in (x.get("exempt") or {}).items():
+            exempted.append(f"i={x.get('i')}:{w}")
+
+    ids = {s["id"].lower() for s in shots}
+    matched = ids & set(by_shot)
+    # 逐句核归属：空 shot 或不认识的 shot 都会被跳过核查——只要有一句这样，本段结论就不可信（2026-09-22 用户复查 #1）
+    orphan = [str(x.get("i")) for x in sents if not str(x.get("shot") or "").strip()]
+    unknown = [f"{x.get('i')}:{x.get('shot')}" for x in sents
+               if str(x.get("shot") or "").strip() and str(x["shot"]).lower() not in ids]
+    if orphan:
+        rec("FAIL", sec, f"{len(orphan)} 句的 shot 为空，这些句不会被核到：i={' '.join(orphan[:10])}"
+                         f"{' …' if len(orphan) > 10 else ''}——跑 `scripts/semantic_annotate.py --sync-shots` 回填")
+    if unknown:
+        rec("FAIL", sec, f"{len(unknown)} 句的 shot 不是本 SHOTBOOK 的镜头，这些句不会被核到：{' '.join(unknown[:10])}"
+                         f"{' …' if len(unknown) > 10 else ''}——镜号写错或分镜改过；跑 `--sync-shots` 重算")
+    hard_miss, soft_miss, data_miss, waived, bad_dev, stray_dev, checked = [], [], [], [], [], [], 0
+    for s in shots:
+        rows = by_shot.get(s["id"].lower(), [])
+        if not rows:
+            continue
+        sem_all: set[str] = set()
+        sem_main: set[str] = set()
+        data_quant = False
+        for x in rows:
+            ws = set(x.get("sem") or [])
+            sem_all |= ws
+            if x.get("weight") == "main":
+                sem_main |= ws
+                if "数据" in ws and "量化" in (x.get("need") or []):
+                    data_quant = True
+        if not sem_all:
+            continue
+        slugs, has_skin = sb_shot_cards(s)
+        ok_dev, bad = sb_deviations(s)
+        bad_dev += [f"{s['id']}: {b[:40]}" for b in bad]
+        if not has_skin:
+            gap = sorted((sem_all & HARD_SEM) - set(ok_dev))
+            if data_quant and "数据" not in ok_dev:
+                gap.append("数据(need 量化)")
+            if gap:
+                hard_miss.append(f"{s['id']} 缺蒙皮行却有 {'/'.join(gap)} 语义")
+            continue
+        checked += 1
+        card_sem: set[str] = set()
+        cats: set[str] = set()
+        for g in slugs:
+            if g in idx:
+                card_sem |= set(idx[g]["semantics"])
+                cats.add(idx[g]["category"])
+        excused = set(ok_dev)
+        mh = sorted((sem_all & HARD_SEM) - card_sem - excused)          # 硬语义：不分 main / sub
+        ms = sorted((sem_main & SOFT_SEM) - card_sem - excused)         # 软语义：只看主句
+        waived += [f"{s['id']}:{w}" for w in sorted((sem_all & (HARD_SEM | SOFT_SEM)) & excused)]
+        stray = sorted(excused - sem_all)
+        if stray:
+            stray_dev.append(f"{s['id']}:{'/'.join(stray)}")
+        if mh:
+            hard_miss.append(f"{s['id']} 缺 {'/'.join(mh)}（本镜卡：{' '.join(slugs) or '无'}）")
+        # 数据主句且 need 含 量化 → 必须有数据类卡或强调卡（评审建议：让 need 字段有机器用途）
+        if data_quant and "数据" not in excused and not (card_sem & {"数据", "强调", "列举", "对比"}) and "数据信息图" not in cats:
+            data_miss.append(f"{s['id']}（本镜卡：{' '.join(slugs) or '无'}）")
+        if data_quant and "数据" in ms and (card_sem & {"数据", "强调", "列举", "对比"} or "数据信息图" in cats):
+            ms.remove("数据")      # 已按 need:量化 的硬判据核过并通过，不再用软规重复报（复核 P2-T3）
+        if ms:
+            soft_miss.append(f"{s['id']} 缺 {'/'.join(ms)}")
+    # 「选卡行」与蒙皮行对账：写了选卡行却没落进蒙皮行 = 这行没人核（评审 P2-7）
+    pick_gap = []
+    for s in shots:
+        picks = shot_picks(s)
+        if not picks:
+            continue
+        slugs = set(sb_shot_cards(s)[0])
+        for w, gs in picks.items():
+            for g in gs:
+                if g not in slugs:
+                    pick_gap.append(f"{s['id']}:{w}→{g}")
+    if pick_gap:
+        rec("WARN", sec, f"「选卡行」里的卡没出现在该镜「蒙皮行」：{' '.join(pick_gap[:8])}——"
+                         f"选卡行是决定、蒙皮行是落地，两者要一致（蒙皮行才是版式轮换与本段闸的依据）")
+    if not matched:
+        rec("FAIL", sec, f"semantics.json 里没有一句归到本 SHOTBOOK 的镜头（SHOTBOOK id：{' '.join(sorted(ids))[:60]}…；"
+                         f"标注里的 shot：{' '.join(sorted(x for x in by_shot if x))[:60] or '全为空'}）——"
+                         f"闸会整段空转；跑 `python3 <skill>/scripts/semantic_annotate.py --sync-shots` 回填 shot")
+        return
+    if hard_miss:
+        rec("FAIL", sec, f"{len(hard_miss)} 镜的语义没有对应的卡：" + "；".join(hard_miss)
+                         + "——在 taxonomy「语义索引」里挑该语义的卡（候选表：scripts/card_match.py）；"
+                           "确实不配卡的话在该镜写一行 `- 语义偏离：<语义> ← 理由`（理由 ≥4 字）")
+    if data_miss:
+        rec("FAIL", sec, f"{len(data_miss)} 镜有「数据」主句且 need 标了「量化」，却没有能承载数字的卡（数据信息图类，或 数据 / 强调 / 列举 / 对比 语义）："
+                         + "；".join(data_miss) + "——要量化就得有承载它的图形（number-counter / chart-grow / unit-grid-proportion…），"
+                                                  "不是把数字当普通标题；不需要量化的把该句 need 里的「量化」去掉")
+    if soft_miss:
+        rec("WARN", sec, f"{len(soft_miss)} 镜主句语义没有对应的卡（软规）：" + "；".join(soft_miss[:8]))
+    if bad_dev:
+        rec("WARN", sec, f"{len(bad_dev)} 行「语义偏离」格式不对、未放行：" + "；".join(bad_dev[:5])
+                         + "——格式 `- 语义偏离：自我介绍 ← 开场已报身份，s11 不再重复`（理由 ≥4 字）")
+    if stray_dev:
+        rec("WARN", sec, f"「语义偏离」写的语义本镜没有（写错镜了？）：{' '.join(stray_dev[:8])}——偏离只对本镜生效，"
+                         f"放在别的镜或清单节里都不放行")
+    if waived:
+        rec("INFO", sec, f"按「语义偏离」放行：{' '.join(waived)}")
+    if exempted:
+        rec("INFO", sec, f"②-1 里按 exempt 放行的词法硬规：{' '.join(exempted[:10])}")
+    if checked == 0:
+        rec("FAIL", sec, "没有一镜真正被核到（镜头都缺蒙皮行，或标注里这些镜没有语义）——闸空转不算通过")
+    elif not hard_miss and not soft_miss and not data_miss:
+        rec("PASS", sec, f"{checked} 镜的语义都有对应语义的卡")
 
 
 def check_shotbook(root: str, shotbook: str, shots_json: str | None, min_ratio: float) -> None:
@@ -296,6 +701,8 @@ def check_shotbook(root: str, shotbook: str, shots_json: str | None, min_ratio: 
     else:
         rec("FAIL", sec, "缺「未完成 / 未采集清单」节（## 未完成 / 未采集清单；内容可以是「无」，节不能没有）——"
                          "任何「本片不做 X」必须二选一：设计决定 + 依据，或 未完成 + 阻塞原因 + 兜底源是否试过")
+    check_variety(shots, text)
+    check_semantics(root, shots, SEM_PATH[0], SCRIPT_PATH[0])
     if shots_json:
         sj = os.path.join(root, shots_json) if not os.path.isabs(shots_json) else shots_json
         if os.path.exists(sj):
@@ -319,9 +726,13 @@ def main() -> int:
     ap.add_argument("--voice", default=None, help="配音文件（查时长逐帧对齐）")
     ap.add_argument("--host-box", default=None, help="人物层容器 W:H——只在素材**整体装入**容器（contain/fill）时给；裁切窗（chip 圆窗 / half 取景）不适用，别传")
     ap.add_argument("--min-footage-ratio", type=float, default=0.34)
+    ap.add_argument("--semantics", default="semantics.json", help="②-1 语义标注（scripts/semantic_annotate.py 产出）；不存在则退化成对 --script 的词法兜底")
+    ap.add_argument("--script", default="script.txt", help="口播稿，只在没有语义标注时做词法兜底")
     a = ap.parse_args()
     root = os.path.abspath(a.project)
     os.chdir(root)
+    SEM_PATH[0] = a.semantics if os.path.isabs(a.semantics) else os.path.join(root, a.semantics)
+    SCRIPT_PATH[0] = a.script if os.path.isabs(a.script) else os.path.join(root, a.script)
 
     print(f"== preflight · {root} · {'media-only（③）' if a.media_only else '全量（④→⑤ 闸）'} ==")
     if a.host:

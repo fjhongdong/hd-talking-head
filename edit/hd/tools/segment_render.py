@@ -36,7 +36,7 @@ FPS = 24
 WIDTH = 1080
 HEIGHT = 1920
 SOFT_SAFE_BOTTOM = 1700
-RENDERER_CONTRACT_VERSION = "hd-segment-component-compositor-v8-direct"
+RENDERER_CONTRACT_VERSION = "hd-segment-component-compositor-v9-overlay-layout"
 _HASH_CHUNK_SIZE = 1024 * 1024
 _SHA256 = frozenset("0123456789abcdef")
 _JOURNAL_SUFFIX = ".publication-journal.json"
@@ -544,12 +544,109 @@ def _layout(
     return left, top, width, height, transparent_layer
 
 
+def _overlay_frame_bounds(
+    path: Path, frame_count: int, *, top: int, height: int,
+) -> dict[int, tuple[int, int, float]]:
+    # Ignore soft shadows and glows when locating the visible group. Use the
+    # amount of visible content to distinguish the full layout from its entrance.
+    layout_filter = (
+        f"fps={FPS},trim=end_frame={frame_count},alphaextract,format=gray,"
+        f"crop={WIDTH}:{height}:0:{top}:exact=1,"
+        "lut=y='if(gte(val,32),val,0)',bbox=min_val=1,signalstats,"
+        "metadata=mode=print:file=-"
+    )
+    try:
+        result = subprocess.run(
+            ("ffmpeg", "-hide_banner", "-nostdin", "-v", "error", "-i", str(path),
+             "-an", "-vf", layout_filter, "-f", "null", "-"),
+            capture_output=True, text=True, check=True, timeout=max(30, frame_count / 4),
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        raise SegmentRenderError(f"could not lay out transparent overlay {path.name}") from error
+    bounds = {}
+    for block in result.stdout.split("frame:")[1:]:
+        header, _, data = block.partition("\n")
+        fields = dict(line.split("=", 1) for line in data.splitlines())
+        if "lavfi.bbox.x1" in fields:
+            bounds[int(header.split()[0])] = (
+                int(fields["lavfi.bbox.x1"]),
+                int(fields["lavfi.bbox.x2"]) + 1,
+                float(fields["lavfi.signalstats.YAVG"]) * height,
+            )
+    return bounds
+
+
+def _automatic_overlay_x_offsets(
+    recipe: Mapping[str, Any],
+    artifacts: tuple[broll_component_executor.ComponentArtifact, ...],
+    paths: tuple[Path, ...],
+) -> dict[str, int]:
+    if recipe["composition"]["family"] != "aroll_with_overlay":
+        return {}
+    components = {component["component_id"]: component for component in recipe["components"]}
+    groups = []
+    running_end = 0
+    for artifact, path in sorted(zip(artifacts, paths), key=lambda pair: pair[0].render_window["start_frame"]):
+        start = artifact.render_window["start_frame"]
+        end = artifact.render_window["end_frame"]
+        if not groups or start >= running_end:
+            groups.append([])
+        running_end = max(running_end, end)
+        component = components[artifact.component_id]
+        translation = component["invocation_record"].get("canvas_translation") or {}
+        groups[-1].append((artifact, path, component, translation))
+
+    offsets = {}
+    for group in groups:
+        # A time-overlapping group can include a separately rendered label for
+        # a target callout. Preserve their relationship if any layer is pinned.
+        if any(component.get("template_id") == "motion-graphics-native/callout_pin" or "x" in translation
+               for _, _, component, translation in group):
+            continue
+        by_frame: dict[int, tuple[int, int, float]] = {}
+        lower, upper = -WIDTH, WIDTH
+        safe_lower, safe_upper = -WIDTH, WIDTH
+        for artifact, path, component, translation in group:
+            start = artifact.render_window["start_frame"]
+            duration = artifact.render_window["end_frame"] - start
+            safe_left, top, width, height, _ = _layout(artifact, component["layer_role"])
+            if translation:
+                y = translation["y"]
+                top = max(0, -y)
+                height = min(HEIGHT, HEIGHT - y) - top
+            is_image = artifact.artifact_media_type == "image"
+            bounds = _overlay_frame_bounds(path, 1 if is_image else duration, top=top, height=height)
+            if not bounds:
+                continue
+            if is_image:
+                bounds = dict.fromkeys(range(duration), bounds[0])
+            left = min(row[0] for row in bounds.values())
+            right = max(row[1] for row in bounds.values())
+            lower, upper = max(lower, -left), min(upper, WIDTH - right)
+            safe_lower = max(safe_lower, safe_left - left)
+            safe_upper = min(safe_upper, safe_left + width - right)
+            for frame, (left, right, coverage) in bounds.items():
+                old_left, old_right, old_coverage = by_frame.get(start + frame, (WIDTH, 0, 0.0))
+                by_frame[start + frame] = min(left, old_left), max(right, old_right), coverage + old_coverage
+        if not by_frame:
+            continue
+        left, right, _ = max(by_frame.values(), key=lambda row: (row[2], row[1] - row[0]))
+        # One constant shift preserves the relationship between overlapping
+        # layers and keeps the complete horizontal sweep inside the canvas.
+        if safe_lower <= safe_upper:
+            lower, upper = safe_lower, safe_upper
+        shift = (WIDTH - left - right) // 2
+        offsets.update((artifact.component_id, min(upper, max(lower, shift))) for artifact, *_ in group)
+    return offsets
+
+
 def build_filter_graph(
     recipe: Mapping[str, Any],
     artifacts: tuple[broll_component_executor.ComponentArtifact, ...],
     *,
     frames: int,
     camera_framings: Mapping[str, dict] | None = None,
+    overlay_x_offsets: Mapping[str, int] | None = None,
 ) -> str:
     """Build the sole frame-level composition graph for approved artifacts."""
 
@@ -702,15 +799,21 @@ def build_filter_graph(
             canvas_index = next_canvas
             continue
         if composition.get("family") == "aroll_with_overlay":
-            # These are full-canvas transparent layers, already laid out in
-            # source pixels. Do not shrink the approved graphic into a B-roll box.
-            # A translated layer keeps every source pixel; only its static
-            # position changes. The default retains the existing safe-zone crop.
-            placement = ("" if translation is not None else
-                         f"crop={width}:{height}:{left}:{top},pad=1080:1920:{left}:{top}:color=black@0,")
+            automatic_x = (overlay_x_offsets or {}).get(artifact.component_id)
+            auto_centered = automatic_x is not None
+            if auto_centered:
+                offset_x = automatic_x
+            placement = ""
+            if translation is None:
+                # Auto placement measures the complete group before shifting.
+                # Keep the vertical safe area and let the offset set the x margins.
+                crop_left = 0 if auto_centered else left
+                crop_width = WIDTH if auto_centered else width
+                placement = (f"crop={crop_width}:{height}:{crop_left}:{top},"
+                             f"pad={WIDTH}:{HEIGHT}:{crop_left}:{top}:color=black@0,")
             # Composite before chroma subsampling so odd integer offsets are
             # not silently rounded by overlay's YUV420 default.
-            overlay_format = ':format=rgb' if translation is not None else ''
+            overlay_format = ':format=rgb' if translation is not None or auto_centered else ''
             filters.append(
                 f"[component_{input_position}_input]"
                 f"{placement}"
@@ -1815,8 +1918,12 @@ def _render_segment_video(
             arroll_snapshot, artifact_snapshots = _snapshot_inputs(
                 job, artifacts, stage, arroll
             )
+            overlay_offsets = _automatic_overlay_x_offsets(
+                prepared.recipe, prepared.artifacts, artifact_snapshots
+            )
             graph = build_filter_graph(
-                prepared.recipe, prepared.artifacts, frames=prepared.frames, camera_framings=cameras
+                prepared.recipe, prepared.artifacts, frames=prepared.frames,
+                camera_framings=cameras, overlay_x_offsets=overlay_offsets,
             )
             stage_video = stage / "segment.mp4"
             command = _ffmpeg_command(

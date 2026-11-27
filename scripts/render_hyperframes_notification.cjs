@@ -9,7 +9,7 @@ const {pipeline} = require('node:stream/promises');
 function resolveRuntime(root) {
   const runtime = fs.realpathSync(root);
   const pkg = JSON.parse(fs.readFileSync(path.join(runtime, 'node_modules/hyperframes/package.json'), 'utf8'));
-  if (pkg.name !== 'hyperframes' || pkg.version !== '0.8.167') throw new Error('HyperFrames runtime version drift');
+  if (pkg.name !== 'hyperframes' || pkg.version !== '0.9.100') throw new Error('HyperFrames runtime version drift');
   const cli = path.join(runtime, 'node_modules/hyperframes/bin/hyperframes.mjs');
   fs.accessSync(cli, fs.constants.R_OK);
   return {root: runtime, cli, version: pkg.version};
@@ -130,6 +130,36 @@ async function main(args) {
       const destination = path.join(temp, ...file.relative.split('/'));
       fs.mkdirSync(path.dirname(destination), {recursive: true});
       fs.writeFileSync(destination, file.bytes, {flag: 'wx'});
+    }
+    if (template.adaptation_level === 'content_reflow') {
+    // Reflow the native card in the private render copy. Its four entries,
+    // cue times and easing remain native; their pitch follows the actual
+    // wrapped content height so neighbouring cards do not overlap.
+    const composition = path.join(temp, path.posix.basename(template.source_entrypoint));
+    let html = fs.readFileSync(composition, 'utf8');
+    const replaceOnce = (source, oldText, replacement) => {
+      if (source.split(oldText).length !== 2) throw new Error('Notification card source layout changed');
+      return source.replace(oldText, replacement);
+    };
+    html = replaceOnce(html, '      /* ---------------- end card ---------------- */', `
+      .nc-banner .nc-title { right: 112px; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
+      .nc-banner .nc-subtitle { right: 28px; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+      /* ---------------- end card ---------------- */`);
+    html = replaceOnce(html, '        var PITCH = 214; /* banner-to-banner spacing, px */', `
+        // All banners use the maximum actual content height so native stack
+        // positions remain uniformly spaced during every seek.
+        var contentHeight = 176;
+        var contentBanners = Array.from(document.querySelectorAll(".nc-banner"));
+        contentBanners.forEach(function (banner) {
+          var title = banner.querySelector(".nc-title");
+          var subtitle = banner.querySelector(".nc-subtitle");
+          subtitle.style.top = (37 + title.getBoundingClientRect().height + 8) + "px";
+          contentHeight = Math.max(contentHeight,
+            Math.ceil(parseFloat(subtitle.style.top) + subtitle.getBoundingClientRect().height + 42));
+        });
+        contentBanners.forEach(function (banner) { banner.style.height = contentHeight + "px"; });
+        var PITCH = contentHeight + 38;`);
+    fs.writeFileSync(composition, html);
     }
     const variables = {
       notifTitle: b.props.data.notifTitle,

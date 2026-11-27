@@ -20,12 +20,14 @@ from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state
 class ConfirmedLocalListTests(unittest.TestCase):
     def test_recovery_binds_the_displayed_content_and_route(self):
         from edit.hd.tools.motion_match_cache import _identity
+        from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             job = SimpleNamespace(job_dir=root, job_id='job', revision=3)
             component = {'segment_id': 'seg-1', 'component_id': 'main'}
-            semantic = {'row_id': 'work', 'components': [component], 'quote': '让大家一起做',
+            timing = {'action_start_frame': 24, 'settled_frame': 48, 'visible_until_frame': 72}
+            semantic = {'row_id': 'work', 'components': [{**component, 'timing': timing}], 'quote': '让大家一起做',
                         'start_word': 0, 'end_word': 1,
                         'semantic': '分工后并行', 'visual_task': '一张订单分成三张工作单'}
             director = {'segments': [{'segment_id': 'seg-1', 'start': 1.0, 'end': 3.0,
@@ -38,7 +40,10 @@ class ConfirmedLocalListTests(unittest.TestCase):
             row = {**component, 'number': 1, 'candidate_id': 'overlay:useanimations/users',
                    'start_frame': 24, 'end_frame': 72, 'semantic_sha256': _identity(semantic, '贴片')}
             table, capture = root / 'display.md', root / 'display.json'
+            validate_semantic_lists(treatment, director)
             table.write_bytes(vc.confirmed_local_table(director, treatment, [row]))
+            self.assertIn('2.000s 前落定，完整展示至 3.000s', table.read_text())
+            self.assertEqual(vc._semantic_handoffs(treatment, {})[('seg-1', 'main')]['timing'], timing)
             def record_for(choice):
                 artifacts.write_json_artifact(capture, {'rows': [choice], 'table': vc._record(root, table)})
                 return {'job_id': job.job_id, 'revision': job.revision, 'rows': [choice],
@@ -46,6 +51,13 @@ class ConfirmedLocalListTests(unittest.TestCase):
             routes, frozen = vc._confirmed_local_selection(job, director, treatment, record_for(row))
             self.assertEqual(routes['overlay_assignments'], [{**component, 'candidate_id': row['candidate_id']}])
             self.assertEqual(frozen, table.read_bytes())
+            timing['visible_until_frame'] = 73
+            with self.assertRaisesRegex(ValueError, 'planned result and hold'):
+                validate_semantic_lists(treatment, director)
+            timing['visible_until_frame'] = 71
+            with self.assertRaisesRegex(ValueError, 'differs from the displayed table'):
+                vc._confirmed_local_selection(job, director, treatment, record_for(row))
+            timing['visible_until_frame'] = 72
             with self.assertRaisesRegex(ValueError, 'differs from the displayed table'):
                 vc._confirmed_local_selection(job, director, treatment,
                     record_for({**row, 'candidate_id': 'overlay:barty-motion-graphics/motion-broll'}))
@@ -119,11 +131,18 @@ class VisualConfirmationTests(unittest.TestCase):
                         '-ac', '1', '-ar', '16000', str(forged)], check=True)
         segment = {'segment_id': 'seg-001', 'start': .25, 'end': 1.75}
         beat = {**segment, 'component_id': 'native', 'transcript': '已批准口播'}
-        original = {'skill_selection': {'beats': [beat]}}
+        original = {'skill_selection': {'beats': [beat]},
+                    'semantic_lists': {'broll': [{
+                        'row_id': 'actual-row', 'quote': beat['transcript'], 'semantic': '测试语义',
+                        'components': [{'segment_id': segment['segment_id'], 'component_id': 'native',
+                                        'timing': {'action_start_frame': 6, 'settled_frame': 18,
+                                                   'visible_until_frame': 42}}],
+                    }]}}
         brief = {'transcript': beat['transcript'], 'speech': {'job_path': clip.name,
             'sha256': artifacts.sha256_file(clip), 'byte_count': clip.stat().st_size},
             'source_binding': {**segment, 'aroll_sha256': artifacts.sha256_file(source)},
-            'word_anchors': [{'text': beat['transcript'], 'start': 0, 'end': 1.5}]}
+            'word_anchors': [{'text': beat['transcript'], 'start': 0, 'end': 1.5}],
+            'task_source': {'quote': beat['transcript'], 'semantic': '测试语义'}}
         words = [{'text': beat['transcript'], 'start': .25, 'end': 1.75}]
         with mock.patch('edit.hd.tools.visual_plan._approved_artifact', return_value=source), \
              mock.patch('edit.hd.tools.motion_capabilities._approved_speech', return_value=words):
@@ -883,6 +902,12 @@ class VisualConfirmationTests(unittest.TestCase):
                 {"text": "Approved source evidence", "start": 0.0, "end": 1.0},
                 {"text": "继续解释", "start": 1.0, "end": 18.0}]):
             with self.assertRaisesRegex(vc.VisualConfirmationError, "time coverage.*affected semantic list"):
+                vc.prepare_visual_confirmation(self.job, self.fixture.brief, self.treatment)
+            treatment["broll_gap_reasons"] = [{
+                "start": 1.0, "end": 18.0, "reason": "保留真人演示的完整过程"
+            }]
+            artifacts.write_json_artifact(self.treatment, treatment)
+            with self.assertRaisesRegex(vc.VisualConfirmationError, "visual pacing.*seg-001: only 16 stable frames"):
                 vc.prepare_visual_confirmation(self.job, self.fixture.brief, self.treatment)
         self.assertFalse((self.job.job_dir / vc.DIRECTORY).exists())
 

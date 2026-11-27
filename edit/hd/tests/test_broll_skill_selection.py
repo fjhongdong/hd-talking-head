@@ -1825,11 +1825,48 @@ class PinBoardInputClockTest(unittest.TestCase):
         self.review["native_input_clock"]["brief"] = {"path": path.name,
             "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
 
-    def assign(self):
+    def assign(self, *, planning_timing=True):
         with patch.object(selection, "discover_candidates", return_value=[]), \
              patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=self.pool):
             return selection.assign_skills(ROOT, self.selection, job_dir=self.root,
-                                           director=self.director, treatment=self.treatment)
+                                           director=self.director, treatment=self.treatment,
+                                           planning_timing=planning_timing)
+
+    def test_planned_stat_deadline_uses_cached_alternative_only_during_planning(self):
+        self.pool[0]["candidate_id"] = "overlay:toggle-flip"
+        for beat in self.selection["overlay_beats"]:
+            beat["candidates"][0]["candidate_id"] = "overlay:toggle-flip"
+        stat = self.pool[1]
+        stat.update(candidate_id="overlay:stat", skill_id="huashu-motion-native",
+                    template_id="huashu-motion/talking-head-stat", adapter_module="huashu_stat_adapter")
+        self.review.pop("native_input_clock")
+        self.review["candidate_id"] = stat["candidate_id"]
+        beat = self.selection["overlay_beats"][1]
+        ref = self.treatment["semantic_lists"]["overlay"][1]["components"][0]
+        ref["timing"] = {"settled_frame": 125, "visible_until_frame": 230}
+        before = copy.deepcopy(self.selection)
+        self.assertIs(selection.semantic_component_timing(self.treatment, beat), ref["timing"])
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:toggle-flip")
+        self.assertEqual(self.assign(planning_timing=False)["overlay_assignments"][1]["candidate_id"], "overlay:stat")
+        self.assertEqual(self.selection, before)
+        planned = self.assign()
+        self.treatment["skill_selection"] = planned
+        for candidate in self.pool:
+            candidate.update(dependency_id=candidate["skill_id"], producer_version="1")
+        for segment, beat, assignment in zip(self.director["segments"], planned["overlay_beats"],
+                                              planned["overlay_assignments"], strict=True):
+            candidate = next(c for c in self.pool if c["candidate_id"] == assignment["candidate_id"])
+            binding = {k: candidate[k] for k in ("dependency_id", "entrypoint", "template_id", "producer_version")}
+            segment["visual_strategy"]["components"][0].update(kind="code_generated", brief="本句用途")
+            segment.update(visual_intent={"statement": "本句用途"}, bindings={"scene": binding})
+            beat.update(intent_statement="本句用途", component_brief="本句用途", binding_snapshot=binding)
+        with patch.object(selection, "discover_candidates", return_value=[]), \
+             patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=self.pool):
+            completed = selection.validate_selection(ROOT, self.director, self.treatment, phase="completed",
+                                                     approved_selection=planned)
+        self.assertEqual(completed["overlay_assignments"], planned["overlay_assignments"])
+        ref["timing"]["settled_frame"] = 126
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:stat")
 
     def test_real_clock_filters_reviewed_and_unreviewed_domains_without_changing_reviews(self):
         for fit in ("equivalent", "unreviewed"):
@@ -2000,6 +2037,35 @@ class PinBoardInputClockTest(unittest.TestCase):
         self.selection["overlay_beats"][1]["candidates"].remove(self.review)
         with self.assertRaisesRegex(ValueError, "Grid clock can fit earlier"):
             self.assign()
+
+    def test_grid_plan_uses_actual_native_landing_and_word_anchors(self):
+        self.add_grid_clock(frames=180)
+        self.selection["overlay_beats"][1]["candidates"].remove(self.review)
+        ref = self.treatment["semantic_lists"]["overlay"][1]["components"][0]
+        ref["timing"] = {"action_start_frame": 111, "settled_frame": 255,
+                         "visible_until_frame": 280}
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:grid-card-assemble")
+        ref["timing"]["settled_frame"] = 254
+        with self.assertRaisesRegex(ValueError, "revise the native input or plan"):
+            self.assign()
+        ref["timing"]["settled_frame"] = 250
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:toggle-flip")
+        # A route without a concrete native deadline contract stays in the pool.
+        ref["timing"].update(action_start_frame=245, settled_frame=250)
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:toggle-flip")
+
+    def test_pinboard_plan_keeps_native_exit_outside_stable_visibility(self):
+        end = 4.625 + 160 / 24
+        self.brief["source_binding"]["end"] = end
+        self.brief["composition"]["frames"] = 160
+        self.brief["doc"]["cards"][0]["end"] = 160 / 24
+        self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
+        self.save_brief()
+        ref = self.treatment["semantic_lists"]["overlay"][1]["components"][0]
+        ref["timing"] = {"settled_frame": 248, "visible_until_frame": 260}
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:pin-board")
+        ref["timing"]["visible_until_frame"] = 261
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:grid-card-assemble")
 
     def test_grid_file_word_and_native_source_errors_are_not_clock_exclusions(self):
         self.add_grid_clock()

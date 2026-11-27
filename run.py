@@ -20,6 +20,7 @@ COMMANDS = {
     "job": None,
     "initialize_video_job": "initialize_video_job.py",
     "verify": "verify_skill_release.py",
+    "vendor_status": "vendor_sources.py",
     "preflight": "dependency_preflight.py",
     "prepare": "project_python.py",
     "run_stage": "run_stage.py",
@@ -39,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
     script = (PACKAGE_ROOT / "edit/hd/tools/cli.py" if args.command == "job"
               else SCRIPTS / COMMANDS[args.command])
     required = {script}
-    if args.command != "verify":
+    if args.command not in {"verify", "vendor_status"}:
         required.add(SCRIPTS / "project_python.py")
     missing = sorted(path for path in required if not path.is_file())
     if missing:
@@ -51,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
                "--project-root", str(PACKAGE_ROOT)]
     if args.command == "prepare":
         command += ["--prepare", *forwarded]
-    elif args.command == "verify":
+    elif args.command in {"verify", "vendor_status"}:
         command = [sys.executable, str(script), *forwarded]
     elif args.command == "job":
         command += ["--", "-m", "edit.hd.tools.cli", *forwarded]

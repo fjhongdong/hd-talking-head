@@ -276,3 +276,84 @@ test("canonical image models keep generation and edit operations distinct", asyn
     }
   }
 });
+
+test("Noiz audio routes map text-to-sound immediately and YuE2 music/cover asynchronously", async () => {
+  const sfx = hypiHubRoutes.find((item) => item.capability.name === "noiz-text-to-sound")!;
+  assert.equal(sfx.lifecycle, "immediate");
+  const sfxPrepared = sfx.prepare({ ports: { prompt: ["Rain on roof"], duration: [8.5], outputFormat: ["mp3"] } });
+  assert.equal(sfxPrepared.model, "noiz-text-to-sound");
+  assert.equal(sfxPrepared.operation, "audio_speech");
+  assert.deepEqual((await sfxPrepared.compile(resolveAudio)).input, {
+    input: "Rain on roof",
+    duration_seconds: 8.5,
+    response_format: "mp3",
+  });
+
+  const tts = hypiHubRoutes.find((item) => item.capability.name === "noiz-tts")!;
+  assert.equal(tts.lifecycle, "immediate");
+  const ttsPrepared = tts.prepare({
+    ports: { text: ["Hello world"], voiceId: ["95814add"], modelId: ["v3"], outputFormat: ["mp3"], speed: [1.1] },
+  });
+  assert.equal(ttsPrepared.model, "noiz-tts");
+  assert.equal(ttsPrepared.operation, "audio_speech");
+  assert.deepEqual((await ttsPrepared.compile(resolveAudio)).input, {
+    input: "Hello world",
+    voice: "95814add",
+    model_id: "v3",
+    response_format: "mp3",
+    speed: 1.1,
+  });
+
+  const vc = hypiHubRoutes.find((item) => item.capability.name === "noiz-voice-clone")!;
+  assert.equal(vc.lifecycle, "immediate");
+  const vcAudio: BlobRef = { kind: "blob", resource: "res_hypihub-vc-1", size: 4, mediaType: "audio/wav" };
+  const vcPrepared = vc.prepare({
+    ports: { text: ["Cloned line"], voiceReference: [{ role: "audio", artifact: vcAudio }], denoise: [true] },
+  });
+  assert.equal(vcPrepared.model, "noiz-voice-clone");
+  assert.equal(vcPrepared.operation, "audio_speech");
+  assert.deepEqual((await vcPrepared.compile(resolveAudio)).input, {
+    input: "Cloned line",
+    reference_audio: ["data:audio/wav;base64,AQID"],
+    denoise: true,
+  });
+
+  const music = hypiHubRoutes.find((item) => item.capability.name === "noiz-yue2-music")!;
+  assert.equal(music.lifecycle, "asynchronous");
+  const musicPrepared = music.prepare({
+    ports: {
+      prompt: ["Warm indie folk"],
+      lyrics: ["[Verse 1]\nMorning light"],
+      vocalGender: ["Female"],
+      lyricTimestamps: [true],
+    },
+  });
+  assert.equal(musicPrepared.model, "noiz-yue2-music");
+  assert.equal(musicPrepared.operation, "audio_music");
+  assert.deepEqual((await musicPrepared.compile(resolveAudio)).input, {
+    prompt: "Warm indie folk",
+    lyrics: "[Verse 1]\nMorning light",
+    vocal_gender: "Female",
+    lyric_timestamps: true,
+  });
+
+  const cover = hypiHubRoutes.find((item) => item.capability.name === "noiz-yue2-cover")!;
+  assert.equal(cover.lifecycle, "asynchronous");
+  const audio: BlobRef = { kind: "blob", resource: "res_hypihub-audio-1", size: 4, mediaType: "audio/wav" };
+  const coverPrepared = cover.prepare({
+    ports: {
+      sourceAudio: [{ role: "audio", artifact: audio }],
+      lyrics: ["[Verse 1]\nNew lyrics"],
+      musicDescription: ["Jazz cover"],
+      melodyAdherence: ["main_melody"],
+    },
+  });
+  assert.equal(coverPrepared.model, "noiz-yue2-cover");
+  assert.equal(coverPrepared.operation, "audio_music");
+  assert.deepEqual((await coverPrepared.compile(resolveAudio)).input, {
+    reference_audio: ["data:audio/wav;base64,AQID"],
+    lyrics: "[Verse 1]\nNew lyrics",
+    music_description: "Jazz cover",
+    melody_adherence: "main_melody",
+  });
+});

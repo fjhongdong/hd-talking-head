@@ -42,13 +42,14 @@ SOURCES = {
                     '6a102e77afea48c6506b517cac5963039a17d2666b9305ab85d63d7ca48ae8c2'),
 }
 SOURCES.update({
-    'huashu-art-motion': ('huashu-art-motion', '8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c', 'eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0'),
-    'mg-styles-15': ('mg-styles-15', '49052d80bfaf9fa8412cc9710530e5e95a3b8d8c',
-                     '0bc6d7c15629618efe41f41e84ca4962fa129d9405cfc539a9e34e79f1c6a775'),
-    'video-shotcraft': ('video-shotcraft', '1266a3ec4831289c4d893d42dd5102723658039a',
-                        '9fea49e170a44a8b576b26f4f41233f4a809b3176a9ff710e067edc0e61503d2'),
-    'bb-video': ('bb-video', 'a21025a19d382b066ff354d877919be9d6863f97',
-                 '677750498dfb7d1f3ef7b297f4904da1fe230ef24087b88df0f1ef5d0ca4e1b9'),
+    'huashu-art-motion': ('huashu-art-motion', 'a97c45018d46e950d56d61981138e08f4e092909',
+                          '8f57730433005c9472b0b9735cb13bbc61265b4655066ba5aebfe78e368aa665'),
+    'mg-styles-15': ('mg-styles-15', '3164c24e188899fd79b155124cfa7eefc7a906e9',
+                     'ff5a90e26ff06faf97cbce87f427ccfac3411965cbd437cf187065438d36978a'),
+    'video-shotcraft': ('video-shotcraft', '1152363da5c824b32dba6d8a2ef7f935b677e445',
+                        'a525b45874924e0e00a550e00e8071de3aebf3fbd01990e9c7382256625f3a2e'),
+    'bb-video': ('bb-video', '0b6e90e20cac5d64d55049dbc618abf9b3f87481',
+                 '56e29dce54c4e11f187ff97858c326a47e4216234f4c53e5af3bb5e02c944cf7'),
     'cinecode': ('cinecode', 'c8a3e7552699360a2b0142c9620882af2069eedb',
                  'b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54'),
 })
@@ -118,12 +119,6 @@ def source_root(project=PROJECT, *, dependency_id):
         raise ValueError('Native motion source revision changed')
     root = path(project, record['source_root'])
     def verify(inventory):
-        if dependency_id == 'huashu-art-motion':
-            # This vendored source retains its real Git identity; repository
-            # bookkeeping is not part of the original source-file manifest.
-            inventory = [p for p in inventory if p.relative_to(root).parts[0] != '.git']
-            if subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip() != commit:
-                raise ValueError('Huashu native source checkout revision changed')
         actual = {p.relative_to(root).as_posix() for p in inventory if p.is_file() and not p.is_symlink()}
         links = {p.relative_to(root).as_posix(): str(p.readlink()) for p in inventory if p.is_symlink()}
         if links != record.get('symlinks', {}) or any(not (root / name).resolve().is_relative_to(root) for name in links):
@@ -304,9 +299,10 @@ def validate_brief(payload, *, dependency_id=None):
 
 def task_source(director, treatment, segment_id, component_id):
     """Derive the task from the parent semantic row, never from a self-certified brief."""
-    key = {'segment_id': segment_id, 'component_id': component_id}
+    key = (segment_id, component_id)
     rows = [row for group in ('overlay', 'broll') for row in treatment.get('semantic_lists', {}).get(group, [])
-            if key in row.get('components', [])]
+            if any((ref.get('segment_id'), ref.get('component_id')) == key
+                   for ref in row.get('components', []))]
     beats = [beat for group in ('beats', 'overlay_beats')
              for beat in treatment.get('skill_selection', {}).get(group, [])
              if (beat.get('segment_id'), beat.get('component_id')) == (segment_id, component_id)]
@@ -782,6 +778,8 @@ def _bb_render_command(brief, argv, runtime, directory, native):
     entries = {native / 'skills/bb-video' / workflow / 'scripts/render.mjs' for workflow in ('explainer', 'promo')}
     if script not in entries:
         raise ValueError('BB Video must execute an original pinned public render.mjs entrypoint')
+    if brief['template_id'] == 'supercut' and script != native / 'skills/bb-video/promo/scripts/render.mjs':
+        raise ValueError('BB Video supercut requires its original promo workflow')
     if Path(argv[2]).resolve(strict=True) != directory.resolve(strict=True):
         raise ValueError('BB Video renderer must receive the current Job project')
     name = relative(argv[-1])
@@ -1162,6 +1160,20 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     if (output.exists() or call_path.exists() or (original_output is not None and original_output.exists())
             or cinecode and (output.parent / 'cinecode-review').exists()):
         raise ValueError('Preserve existing native output and use a new revision directory')
+    if brief['dependency_id'] == 'huashu-art-motion':
+        from huashu_motion_adapter import prepare_keynote_autosize
+        prepare_keynote_autosize(root, brief, PROJECT / 'vendor/huashu-art-motion')
+        _render_command(root, brief, argv, runtime)
+    else:
+        from text_card_layout import install_card_css, install_react_card_css
+        html_entry = {
+            'barty-motion-graphics': argv[2], 'bang-motion': argv[2],
+            'bb-video': 'index.html', 'mg-styles-15': 'scene/index.html', 'cinecode': argv[3],
+        }.get(brief['dependency_id'])
+        if html_entry is not None:
+            install_card_css(directory, html_entry)
+        if brief['dependency_id'] == 'video-shotcraft':
+            install_react_card_css(directory, 'src/index.ts')
     output.parent.mkdir(parents=True, exist_ok=True)
     before = project_files(root, directory)
     if cinecode:

@@ -15,7 +15,6 @@ SKILL = PACKAGE_ROOT
 PROJECT = SKILL
 ENTRY = "scripts/render_hyperframes_hw_pipeline.cjs"
 SOURCE = PROJECT / "vendor/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html"
-GSAP = PROJECT / "vendor/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js"
 VERSION = "1.1.1"
 
 
@@ -112,7 +111,8 @@ def create_adapter(*, runtime_root, node_executable, browser_executable, ffmpeg_
     if _sha(SOURCE) != "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb":
         raise ValueError("hw-pipeline upstream source changed")
     runtime = resolve_runtime(runtime)["root"]
-    hashes = {_path: _sha(_path) for _path in (node, browser, ffmpeg, SOURCE, GSAP)}
+    gsap = runtime / "node_modules/gsap/dist/gsap.min.js"
+    hashes = {_path: _sha(_path) for _path in (node, browser, ffmpeg, SOURCE, gsap)}
 
     def guarded_loader(job, recipe, component):
         if any(_sha(path) != digest for path, digest in hashes.items()):
@@ -130,7 +130,7 @@ def create_adapter(*, runtime_root, node_executable, browser_executable, ffmpeg_
         self_contained_wrapper=True, timeout_seconds=300,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}",
                        "--output", "{output_path}", "--runtime-root", str(runtime),
-                       "--source", str(SOURCE), "--vendor-gsap", str(GSAP),
+                       "--source", str(SOURCE), "--vendor-gsap", str(gsap),
                        "--browser", str(browser), "--ffmpeg", str(ffmpeg)),
     )
 

@@ -4,9 +4,9 @@
 
 Paper 的原生 HyperFrames 路线通过 `scripts/paper_hyperframes_adapter.py`（`dependency_id=paper-collage-hyperframes`）执行；HyperFrames Registry 的竖屏结构适配继续使用 `scripts/hyperframes_native_adapter.py`。两者冻结 Job HTML 及实际图片资产，调用同一上游 CLI 0.8.19，不在预览末尾临时覆盖旧视频；每段来源分别标为 Paper 的文档路线或 Registry 原组件。Paper 专用入口只增加实际运动检查，不改变其他已确认组件的入口身份。图片和时间轴均进入正式配方，结构重排仍是 `custom_fallback`，不是已验证整屏模板。TalkCraft 原生计数器允许真实有限数值，必须绑定 `numeric_values` 与 `linear`，不得把含数字内容伪装为无数字图解。
 
-主 Skill 负责理解当前口播、选择视觉作用、安排时码、调用现成 Skill、验收并合成。子 Skill 负责它已经实现的绘制或动画能力。新计划只把已核对、可实际调用的完整原生入口列为候选；Lemo-Opuscar 66 个独立 style 已按 [Lemo 接入说明](lemo-opuscar.md)接入，OneTake 的历史制作记录仍仅供追溯。选择后先读取完整上游 Skill 及 composition/motion/look 指引。不要把“读取说明”“沿用风格词”“自己写一套动画”描述成实际调用。固定提交、brief、workflow、探针和无 smoke 不宣称完成的边界见[上游场景 Skill 与本地渲染合同](upstream-scene-skills.md)。
+主 Skill 理解当前口播、选择视觉作用、安排时码并合成。Lemo-Opuscar 按[已登记风格](lemo-opuscar.md)参与选型，OneTake 按连续运动场景参与选型。选中后读取原生 Skill 和当前场景所需指引，用实际的 brief、workflow 和原生渲染入口制作。[上游场景 Skill 与本地渲染合同](upstream-scene-skills.md)
 
-TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚改变时序时，使用独立的 `talkcraft-native-adaptation` 适配器和 Job 内冻结源码；保留上游真实动画实现，只调整当前镜头内容、布局与时间。绑定标为 `custom_fallback / structural`，不能借用 `hd-talking-head-talkcraft` 的已合格整屏配方身份。每段经实际渲染与当前口播验收后才能作为正式资产；单独草稿不是正式接入通过。
+TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚改变时序时，使用独立的 `talkcraft-native-adaptation` 适配器和 Job 内冻结源码；保留上游真实动画实现，只调整当前镜头内容、布局与时间。绑定标为 `custom_fallback / structural`，不能借用 `hd-talking-head-talkcraft` 的已合格整屏配方身份。正式资产由本期已确认的口播、实际原生输入和渲染结果绑定；单独草稿不是正式接入通过。
 
 本页命令中的“批准帧率”在当前 full-v2 中只能是 24fps；输入素材的原始帧率不改变正式计划或成片的输出帧率。
 
@@ -27,11 +27,11 @@ TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚�
 | 候选 | 适合 | 已接通能力与使用限制 |
 | --- | --- | --- |
 | Adu Motion Video | 适合局部、短时的原生对比或状态切换，且当前语义确实需要该动作 | 当前只核对到 `TPL.compare` 的局部 `old/new` 原生入口；不能把历史“三项支点分解”记录当作当前可用配方，也不能据此开放其他场景。真实调用、时长和输入缺口须按[上游场景合同](upstream-scene-skills.md)记录。 |
-| Doudou Remotion Whiteboard | 手绘箭头、流程展开、划圈强调、铅笔跟随与纸质动效 | 已获取锁定源码；有真实 React 组件及 3 套原生配方，使用项目渲染桥直接调用。新增独立组件适配器与绑定探针；不是所有说明里的能力都有独立组件，原生配方中有固定英文标签。每段仍须正式编译、执行和当前语义验收，不能借用旧 Whiteboard 的依赖身份。 |
+| Doudou Remotion Whiteboard | 手绘箭头、流程展开、划圈强调、铅笔跟随与纸质动效 | 已获取锁定源码；有真实 React 组件及 3 套原生配方，使用项目渲染桥直接调用。新增独立组件适配器与绑定探针；不是所有说明里的能力都有独立组件，原生配方中有固定英文标签。按本期已确认的语义正式编译与执行，依赖身份使用实际的 Doudou 入口。 |
 | Codex Whiteboard Video | 逐步讲解、结构、流程与关系展开 | 原生 SVG 分组入口已接入公共组件执行器，实测提问与回应展开及配准粗线；“移动门槛”样片仍未通过语义验收。照片神经线稿路径未测试，当前能力样片不等于精美样式批准。 |
-| Paper Collage Ad | 可用纸片动作讲清的隐喻、组装、汇聚、门槛变化 | 单镜头分层动画已接入公共组件执行器并实测；不用完整广告改稿、配音、音乐或 CTA。真纸感图层及每段动作、构图仍须验收，不是通用已验证模板。 |
-| Flat Animation | 知识图解、分类、对比、连接与状态变化 | 当前核对的是 `muyang-flat-animation`，使用前确认它是否为用户所指仓库。只编排其动画方案、画风和完成静帧；动态视频交给本 Job 启动时确认的视频渠道，不能说 Flat 原生视频入口已执行。当前片段仍须真实验收。 |
-| GBRO Collage B-roll | 口播概念的视觉隐喻、半调纸片逐件组装 | 用户指定的 `pyang5166/gbro-collage-broll` 已纳入启动源码检查；实际编排其隐喻方案和拼贴静帧，图片与视频分别使用本 Job 已确认渠道。不是本地分层动画器，也不宣称 GBRO 原生视频入口已执行；当前片段仍须真实验收。 |
+| Paper Collage Ad | 可用纸片动作讲清的隐喻、组装、汇聚、门槛变化 | 单镜头分层动画已接入公共组件执行器并实测；不用完整广告改稿、配音、音乐或 CTA。按本期画面准备真实纸质图层、动作与构图，绑定实际方案。 |
+| Flat Animation | 知识图解、分类、对比、连接与状态变化 | 当前核对的是 `muyang-flat-animation`，使用前确认它是否为用户所指仓库。只编排其动画方案、画风和完成静帧；动态视频交给本 Job 启动时确认的视频渠道，不能说 Flat 原生视频入口已执行。 |
+| GBRO Collage B-roll | 口播概念的视觉隐喻、半调纸片逐件组装 | 用户指定的 `pyang5166/gbro-collage-broll` 已纳入启动源码检查；实际编排其隐喻方案和拼贴静帧，图片与视频分别使用本 Job 已确认渠道。不是本地分层动画器，也不宣称 GBRO 原生视频入口已执行。 |
 | Huashu 原生动效 | 完整 grammar 与原生主题风格流程 | 原版 vendor 保持不变；统一完整 Skill 接口，当前竖屏支持 8 个 grammar 和 35 个已成型风格；grammar 的真实 alpha 可用于贴片。研究卡与原生固定 16:9 路线不进当前生产候选，详见专用合同。 |
 
 除 Huashu 已登记的精确范围外，以上其他候选不自动登记成 `verified_third_party`。Paper 分层引擎与 Whiteboard SVG 分组入口已有下述组件接口，但每段自定义画面仍是 `custom_fallback`，不是已验证模板。其他源码没有兼容的正式来源绑定时仅作来源参考，不进入候选或计数，不伪造 renderer 名称，也不把生成物改叫 `local_material` 绕过原来源门。
@@ -175,7 +175,7 @@ Lovart MCP 图片上传先核对完整 JSON 传输预算（实际 4 MiB，留 64
 
 仅处理清单已经批准的准确 `visible_text`、生成要求明确交给父级的固定非动效标签，或用户已明确要求替换的源片固定标题。沿用 [video-use 静态文字层与 FFmpeg 合成](official-video-acquisition.md#竖屏静态标题合成)，不另写动画或绘字引擎，不增加镜头编号、视觉组件、渠道或模板。先实看当前真实视频，选择固定标签确实能成立的字区及阅读窗；目标需要移动跟随而当前原生路径不能实现时停止该镜头，不能用静态 AI 标签冒充随光标移动。
 
-宿主完整读取包内 `vendor/video-use-skill/SKILL.md`，按其 PIL 路线使用真实中文字体，将实际 JSON 文字输入栅格化为透明 PNG。保留实际输入、字体身份、执行源码或入口、完整参数、真实退出码和输出身份；在现有阶段制作记录中登记，不新增用户审批。输入 JSON 是真实栅格化输入，不能事后造同名文字清单。PNG 的实际文字、位置、对比度及完整阅读窗仍经原尺寸实看与现有 OCR 门检查。
+宿主完整读取包内 `vendor/video-use/SKILL.md`，按其 PIL 路线使用真实中文字体，将实际 JSON 文字输入栅格化为透明 PNG。保留实际输入、字体身份、执行源码或入口、完整参数、真实退出码和输出身份；在现有阶段制作记录中登记，不新增用户审批。输入 JSON 是真实栅格化输入，不能事后造同名文字清单。PNG 的实际文字、位置、对比度及完整阅读窗仍经原尺寸实看与现有 OCR 门检查。
 
 将下列 manifest 的精确 `{job_path,sha256,byte_count}` 描述放入该组件已完成绑定的 `parent_static_labels`。原 `generated_media.prepare_binding(record)` 所得 provider/model/endpoint/generation/media SHA/尺寸不变；原队列产物仍由 adapter 原样消费。编译器仅将该父级字段留在 segment binding，现有 `segment_render` 在原生背景组合后、人物／头像前叠加 PNG；有 presenter 时必须找到本包唯一 `[canvas_N][presenter]overlay` 锚点，否则停止，不能退到人物上方叠字。没有 presenter 的输出沿原末尾合成。原图、原视频及收费调用记录不改写。
 

@@ -9,7 +9,7 @@ const {pipeline} = require('node:stream/promises');
 function resolveRuntime(root) {
   const runtime = fs.realpathSync(root);
   const pkg = JSON.parse(fs.readFileSync(path.join(runtime, 'node_modules/hyperframes/package.json'), 'utf8'));
-  if (pkg.name !== 'hyperframes' || pkg.version !== '0.8.167') throw new Error('HyperFrames runtime version drift');
+  if (pkg.name !== 'hyperframes' || pkg.version !== '0.9.100') throw new Error('HyperFrames runtime version drift');
   const cli = path.join(runtime, 'node_modules/hyperframes/bin/hyperframes.mjs');
   fs.accessSync(cli, fs.constants.R_OK);
   return {root: runtime, cli, version: pkg.version};

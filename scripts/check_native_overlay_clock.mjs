@@ -23,15 +23,14 @@ import {once} from 'node:events';
 import {createHash} from 'node:crypto';
 
 const GSAP_CANDIDATES = [
-  "vendor/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js",
-  "vendor/hyperframes/skills/music-to-video/references/motion-primitives/assets/gsap.min.js",
+  "runtime/hyperframes-0.9.100/node_modules/gsap/dist/gsap.min.js",
 ];
 const CHROME_CANDIDATES = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
 ];
 const PLAYWRIGHT_CANDIDATES = ["runtime/adu-native/node_modules/playwright-core"];
-const HYPERFRAMES = "runtime/hyperframes-0.8.167/node_modules/hyperframes/bin/hyperframes.mjs";
+const HYPERFRAMES = "runtime/hyperframes-0.9.100/node_modules/hyperframes/bin/hyperframes.mjs";
 const FPS = 24;
 
 function firstExisting(root, relatives, absolute = false) {
@@ -51,7 +50,7 @@ async function readStdinJson() {
 
 export const SAMPLE = async (entry, fps) => {
   const route = entry.route.replace(/^hyperframes\//, '');
-  const mount = document.querySelector(`[data-composition-id="${route}"][data-composition-src]`);
+  const mount = document.querySelector(`[data-composition-id="${route}"][data-composition-file]`);
   if (!mount) throw new Error('requested composition mount is missing');
   const roots = mount.querySelectorAll('[data-hf-authored-id="root"][data-hf-inner-root]');
   if (roots.length !== 1) throw new Error('requested native instance has no unique authored root');
@@ -388,7 +387,7 @@ export async function runCheck(request) {
         const config = await (await page.request.get(base + '/__hyperframes_config')).json();
         if (typeof config.projectName !== 'string' || !config.projectName) throw new Error('preview project identity is missing');
         update('runtime_readiness');
-        await page.goto(base + '/api/projects/' + encodeURIComponent(config.projectName) + '/preview/comp/index.html',
+        await page.goto(base + '/api/projects/' + encodeURIComponent(config.projectName) + '/preview',
           {waitUntil: 'domcontentloaded', timeout: 15000});
         checkpoint();
         try {

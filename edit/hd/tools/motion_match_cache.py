@@ -847,7 +847,7 @@ def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()
     rows = semantic_visual_plan.component_semantic_rows(treatment)
     for assignment in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]:
         skill = assignment.get("skill_id")
-        if skill not in {"openfilm-motion-graphics", "lemo-opuscar"}:
+        if skill not in {"openfilm-motion-graphics", "lemo-opuscar", "onetake"}:
             continue
         key = (assignment["segment_id"], assignment["component_id"])
         if key in planned_targets:
@@ -875,8 +875,13 @@ def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()
                        or handoff.get(field) != value or beat.get(field) != value
                        for field, value in expected.items())):
             raise ValueError("selected native semantic handoff differs from the approved semantic row or beat")
-        template = ("lemo-opuscar/" + brief.get("style_slug", "")
-                    if skill == "lemo-opuscar" else "openfilm/motion-graphics-scene")
+        if skill == "lemo-opuscar":
+            template = "lemo-opuscar/" + brief.get("style_slug", "")
+        elif skill == "onetake":
+            from scripts.upstream_scene_adapter import ONETAKE_TEMPLATE_ID
+            template = ONETAKE_TEMPLATE_ID
+        else:
+            template = "openfilm/motion-graphics-scene"
         if assignment.get("template_id") != template:
             raise ValueError("selected native handoff changed its approved template")
 

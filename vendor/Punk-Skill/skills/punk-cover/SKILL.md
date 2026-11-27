@@ -27,6 +27,12 @@ Use three inputs:
 
 The style file defines the reusable visual language. The cover blueprint defines the output form. The final prompt must fuse them into one complete cover-generation prompt.
 
+## Text-free style exception
+
+When the selected style metadata declares `text_policy: none`, its no-text rule overrides every generic title, subtitle, typography, label, and missing-title requirement in this workflow and the cover blueprint. Keep the topic and core meaning as semantic inputs only; remove title hierarchy and text-rendering instructions from the compiled prompt. Do not add a title to make the cover "readable". Language mode still controls interaction and prompt prose.
+
+Accept `古典油画 · 极简视觉隐喻`, `Classical Oil Painting Minimal Metaphor`, its style ID, or a complete matching classical-oil-painting/pure-white/text-free metaphor brief as explicit selection. Read its `META.md` and `STYLE.md`. For this explicitly selected style only, if neither platform nor ratio is supplied, use its default requested ratio `5:2` without a platform question, then apply the existing ratio-resolution/disclosure rules. Explicit platform, ratio, or dimensions take precedence. Article-only input without a selected style keeps the usual confirmation gate.
+
 ## Resources
 
 - Read `references/style-catalog.md` to list or choose cover styles.
