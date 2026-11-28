@@ -915,9 +915,6 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
     if any(key in revision_locks and revision_locks[key] != value for key,value in source_locks.items()):
         raise ValueError('native supplement selection conflicts with an approved route lock')
     revision_locks.update(source_locks)
-    from scripts.warm_clay_overlay import overlay_style
-    default_style = (overlay_style(treatment) if overlay_keys and treatment is not None
-                     and confirmed_locks is None else None)
     # The treatment's existing first-beat/opening declaration narrows only the
     # first body item.  It does not remove Wake (or any other reviewed route)
     # from the candidate pool for later semantic items.
@@ -938,9 +935,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
         for field in ("transcript", "semantic_goal", "required_change"):
             _text(beat.get(field), field)
         reviews = beat.get("skill_reviews", {})
-        key = (beat["segment_id"], beat["component_id"])
-        is_overlay = key in overlay_keys
-        style_route = default_style['candidate_id'] if default_style and is_overlay and key not in revision_locks else None
+        is_overlay = (beat["segment_id"], beat["component_id"]) in overlay_keys
         if not is_overlay and set(reviews) != skills:
             raise ValueError("B-roll must review the full discovered Skill pool, not only favorite sources")
         for review in reviews.values():
@@ -967,7 +962,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
                 if fit != "unreviewed":
                     _text(candidate.get("visual_pattern"), "shared visual pattern")
                 identity = _execution_identity(beat, supplements)
-                if (not style_route or cid == style_route) and (identity, cid) not in temporarily_disabled:
+                if (identity, cid) not in temporarily_disabled:
                     optimistic.append(candidate)
                     if fit != "unreviewed":
                         eligible.append(candidate)
@@ -981,7 +976,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
             if (not optimistic and
                     (_execution_identity(beat, supplements), first["candidate_id"]) not in temporarily_disabled):
                 raise ValueError("opening candidate is missing or not suitable")
-        locked = revision_locks.get(key)
+        locked = revision_locks.get((beat["segment_id"], beat["component_id"]))
         if locked is not None:
             eligible = [candidate for candidate in eligible if candidate["candidate_id"] == locked]
             optimistic = [candidate for candidate in optimistic if candidate["candidate_id"] == locked]
@@ -991,8 +986,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
         domain = eligible
         if not optimistic:
             frames = round(_duration(beat) * 24)
-            scope = f" ({default_style['id']})" if style_route else ""
-            raise ValueError(f"{beat['segment_id']}:{beat['component_id']} has no timing-feasible candidate{scope} "
+            raise ValueError(f"{beat['segment_id']}:{beat['component_id']} has no timing-feasible candidate "
                              f"for {frames} frames ({beat['start']:.3f}-{beat['end']:.3f}s)")
         domains.append(sorted(domain, key=lambda c: c["candidate_id"]))
         optimistic_domains.append(sorted(optimistic, key=lambda c: c["candidate_id"]))

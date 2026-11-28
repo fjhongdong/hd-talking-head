@@ -6,8 +6,6 @@
 
 `prepare_template_inputs` 和 `execute_native_skill` 从同一已确认 `proposal` 投影本项 `semantic_row`。贴片直接使用 `overlay_action` 的主体、初态、动作和结果。带 `timing` 的贴片同时收到换算好的 `overlay_local_timing`，按本镜局部 24fps 帧安排起势、落定和停留。其他画面可由 `timing` 和镜头起点换算。`proposal` 提供同渠道、同模板的整表语境。原生 Skill 落实本镜的构图、材质与编舞。
 
-默认透明贴片同时收到 `overlay_style`。沿[暖色 3D 黏土制作](warm-clay-overlay.md)使用其中的 `build_argv`，把本句专属的 3D 物件和动作放进共用材质、灯光及定格时钟，再通过原生透明入口渲染。
-
 GBRO 的首尾帧准备也使用这份交接。`proposal` 指完整清单，`source_approval` 单独指确认回执。确认表展示 `required_content` 的含义和必须出现的词。渠道与模板仍在合格候选中联合最大化。当前 Job 确实缺少视频生成渠道时，才可用 `constraint_refs.requirement={source:"authorization",purpose:"video"}` 排除依赖该渠道的设计候选。局部返修仍沿用明确的改动范围和候选锁。
 
 制作聊天或通知镜头时，按[聊天与通知](visual-quality-contract.md#聊天与通知)准备原生 brief 和实际画面输入，在原生设计或项目宿主布局中落实。

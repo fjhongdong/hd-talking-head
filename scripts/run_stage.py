@@ -176,12 +176,10 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
                          treatment: Path | None = None, reviewed_visual_text: Path | None = None,
                          *, confirmed_local_list=None) -> dict:
     from edit.hd.tools import state, visual_plan, visual_confirmation, avatar_profile, contract_artifacts
-    from scripts.warm_clay_overlay import authoring_input, overlay_style
     job = state.load_job(job_dir)
     if director_brief is None or treatment is None:
         return _summary(job, 'visual_direction', actions=[{
             'action': 'provide_visual_plan', 'arguments': ['--director-brief', '--treatment'],
-            'overlay_style': authoring_input(overlay_style()),
             'next': '按 references/visual-quality-contract.md 的“动效数量与节奏”，从剪后原话一次找齐'
                     '能独立拍清并留足停留的视觉变化，先分列贴片与 B-roll，再定两类数量。'
                     '需要看清真实表情或手势的段落留给真人，同一变化的连续动作合在一起。'
@@ -189,8 +187,7 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
                     '每项贴片先把口播变成一个看得懂的事件，在 overlay_action 中写出可辨主体 subject、'
                     '初态 initial_state、运动 movement 和结果 result。用具体物件或真实界面，'
                     '让动作本身表现原话的做法、变化或条件。用组件 timing 将起势、落定和停留挂到对应口播上。'
-                    '默认将贴片做成 overlay_style 给定的暖色 3D 黏土微缩场景，按 candidate_id 选透明创作入口。'
-                    '需要看完整操作时排成 B-roll。用户本期明确指定其他贴片风格或固定模板时在 treatment 填 overlay_style=native。'
+                    '再选能做出这个动作的固定模板或开放创作路线。需要看完整操作时排成 B-roll。'
                     '精确数字、原文引语或静态资料也可直接成为主体。required_content 只补必须保留的画面要点、事实与文字。'
                     '匹配一次，核实候选能力和所需素材，再最大化渠道、最大化模板，最后校时。'}])
     reviewed = _json(_path(job, reviewed_visual_text)) if reviewed_visual_text else None
@@ -429,7 +426,6 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     from edit.hd.tools import generation_channels, generation_queue, contract_artifacts
     from edit.hd.tools.segment_render import overlay_group_target
     from edit.hd.tools.subtitles_v2 import subtitle_layout
-    from scripts.warm_clay_overlay import authoring_input, overlay_style
     data = payload or {}
     authorized = confirmation.validate_visual_authorization(job)
     if any(r['path'].endswith('/' + confirmation.MAPPING) for r in job.stages['visual_direction']['artifacts']):
@@ -455,19 +451,11 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     frozen_treatment = confirmation._read(confirmation._exact(job.job_dir, inputs['treatment']))
     handoffs = confirmation._semantic_handoffs(frozen_treatment, authorized['payload']['source'])
     segments_by_id = {segment['segment_id']: segment for segment in draft['segments']}
-    style = overlay_style(frozen_treatment)
-    for (sid, cid), handoff in handoffs.items():
-        segment = segments_by_id[sid]
+    for (sid, _), handoff in handoffs.items():
         if 'overlay_action' in handoff and 'timing' in handoff:
-            segment_start_frame = round(segment['start'] * 24)
+            segment_start_frame = round(segments_by_id[sid]['start'] * 24)
             handoff['overlay_local_timing'] = {cue: frame - segment_start_frame
                                                for cue, frame in handoff['timing'].items()}
-        if style and segment['visual_strategy'].get('composition', {}).get('family') == 'aroll_with_overlay':
-            binding = segment.get('bindings', {}).get(cid, {})
-            if 'overlay:' + binding.get('template_id', '') == style['candidate_id']:
-                frames = round(segment['end'] * 24) - round(segment['start'] * 24)
-                handoff['overlay_style'] = authoring_input(style, frames=frames,
-                                                           timing=handoff.get('overlay_local_timing'))
 
     pending = confirmation.unprepared_template_targets(draft, scene_plan)
     errors, invalid, native_actions = [], set(), {}
@@ -554,10 +542,6 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         'Refer to the confirmed proposal for other rows using '
         'this route so each has a distinct treatment grounded in its own meaning. The native workflow '
         'owns creative design and its technical QA.')
-    clay_context = (' Use overlay_style.guide and overlay_style.build_argv to build the warm-clay '
-        'native fragment on the supplied frame clock. Create this line\'s objects and poses; the shared '
-        'scene supplies the transparent canvas, matte materials, warm lighting and stepped motion. '
-        'Render the resulting fragment through the original Barty build and alpha renderer.')
     onetake_targets = {(row['segment_id'], row['component_id'])
                        for row in frozen_treatment.get('skill_selection', {}).get('assignments', [])
                        if row['skill_id'] == 'onetake'}
@@ -573,8 +557,6 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
             'completed_generations': [steps[step['id']] for step in required],
             'return_fields': ['realization.director_brief', 'realization.treatment'],
             'next': creative_context, **handoffs[(sid, cid)]}
-        if 'overlay_style' in action:
-            action['next'] += clay_context
         segment = segments_by_id[sid]
         strategy = segment['visual_strategy']
         zones, placement = subtitle_layout(strategy['mode'], strategy.get('composition', {}))
@@ -609,8 +591,6 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
                                                         action['brief_sha256'])
                     action.update(handoffs[key])
                     action['next'] = (action.get('next', '') + ' ' + creative_context).strip()
-                    if 'overlay_style' in action:
-                        action['next'] += clay_context
             except (ValueError, OSError, KeyError, TypeError, RuntimeError) as error:
                 invalid.add(key)
                 errors.append({'segment_id': key[0], 'component_id': key[1], 'error': str(error)})

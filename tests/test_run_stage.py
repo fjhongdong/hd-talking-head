@@ -30,8 +30,7 @@ class CheckOnlyStageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             job = SimpleNamespace(job_dir=root, stages={'visual_direction': {'artifacts': []}})
-            base = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics',
-                    'template_id': 'barty-motion-graphics/motion-broll'}
+            base = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics'}
             director = {'segments': [{'segment_id': 'seg-001', 'start': 2, 'end': 4, 'bindings': {
                 'waiting': base, 'dependent': base, 'ready': {**base, 'brief_sha256': 'a' * 64}},
                 'visual_strategy': {'mode': 'none', 'composition': {'family': 'aroll_with_overlay', 'component_dependencies': [
@@ -82,11 +81,6 @@ class CheckOnlyStageTests(unittest.TestCase):
                 self.assertEqual(native_action['overlay_action'], semantic['overlay_action'])
                 self.assertEqual(native_action['overlay_local_timing'],
                                  {'action_start_frame': 6, 'settled_frame': 18, 'visible_until_frame': 47})
-                self.assertEqual(native_action['overlay_style']['id'], 'warm-clay-3d')
-                build_argv = native_action['overlay_style']['build_argv']
-                self.assertTrue(Path(build_argv[1]).is_file())
-                self.assertEqual(build_argv[2:], ['--frames', '48', '--action-start-frame', '6',
-                    '--settled-frame', '18', '--visible-until-frame', '47'])
                 dispatch.assert_called_once_with(job, authorized['source'], treatment, ('seg-001', 'ready'),
                                                  'fixture', root / 'ready.json', 'a' * 64)
                 self.assertNotIn('same_template_context', native_action)
@@ -99,7 +93,6 @@ class CheckOnlyStageTests(unittest.TestCase):
                 self.assertEqual(preparations[0]['semantic_row'], native_action['semantic_row'])
                 self.assertEqual(preparations[0]['overlay_action'], native_action['overlay_action'])
                 self.assertEqual(preparations[0]['overlay_local_timing'], native_action['overlay_local_timing'])
-                self.assertEqual(preparations[0]['overlay_style'], native_action['overlay_style'])
                 self.assertEqual(preparations[0]['parent_subtitle_layout']['placement'], 'standard')
                 finalize.assert_not_called()
                 dispatch.side_effect = ValueError('stale prepared brief')

@@ -14,25 +14,6 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class BrollSkillSelectionTest(unittest.TestCase):
-    def test_new_overlays_use_the_default_clay_authoring_route(self):
-        clay = 'overlay:barty-motion-graphics/motion-broll'
-        callout = 'overlay:callout-pin'
-        beat = {'segment_id': 's0', 'component_id': 'c', 'start': 0, 'end': 3,
-                'transcript': '审批通过才会发出。', 'semantic_goal': '先审批后投递',
-                'required_change': '闸门抬起，信封通过'}
-        candidate = {'candidate_id': callout, 'fit': 'preferred', 'reason': '可作原生标注',
-                     'visual_pattern': '标注'}
-        beat['candidates'] = [candidate]
-        plan = {'schema_version': 1, 'beats': [], 'overlay_beats': [beat], 'history_note': '新项目'}
-        with self.assertRaisesRegex(ValueError, 'warm-clay-3d'):
-            selection.assign_skills(ROOT, plan, treatment={})
-        selected = selection.assign_skills(ROOT, plan, treatment={'overlay_style': 'native'})
-        self.assertEqual(selected['overlay_assignments'][0]['candidate_id'], callout)
-        beat['candidates'].append({**candidate, 'candidate_id': clay, 'fit': 'equivalent',
-                                   'reason': '可创作黏土信封和闸门', 'visual_pattern': '开闸后投递'})
-        selected = selection.assign_skills(ROOT, plan, treatment={})
-        self.assertEqual(selected['overlay_assignments'][0]['candidate_id'], clay)
-
     def test_cinecode_keeps_shared_routes_and_selects_only_feasible_drawings(self):
         from edit.hd.tools import motion_capabilities as motion, motion_match_cache as cache
         from scripts.cinecode_catalog import validate_material_plan
@@ -181,7 +162,6 @@ class BrollSkillSelectionTest(unittest.TestCase):
     def complete_overlay_cache(self, draft, treatment):
         from edit.hd.tools import motion_match_cache, overlay_selection
         from edit.hd.tests.test_motion_match_cache import expression_fixture
-        treatment['overlay_style'] = 'native'
         for segment in draft["segments"]:
             segment.setdefault("visual_intent", {"statement": "并列说明"})
             for component in segment["visual_strategy"]["components"]:
@@ -670,7 +650,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
             assigned = selection.assign_skills(ROOT, source)
             self.assertEqual(assigned["assignments"][0]["candidate_id"], "b")
             self.assertEqual(assigned["overlay_assignments"][0]["candidate_id"], "overlay:test")
-            treatment = {"skill_selection": assigned, "overlay_style": "native"}
+            treatment = {"skill_selection": assigned}
             selection.validate_selection(ROOT, draft, treatment)
             for mutation in ("missing", "fixed"):
                 altered = copy.deepcopy(treatment)
@@ -1649,7 +1629,7 @@ class PartialCandidateReviewTest(unittest.TestCase):
         row = {'row_id': 'r0', 'start_word': 0, 'end_word': 1, 'quote': '并列要点',
                'semantic': '并列要点', 'visual_task': '要点逐项出现',
                'components': [{'segment_id': 's0', 'component_id': 'c'}]}
-        treatment = {'overlay_style': 'native', 'semantic_lists': {'overlay': [row], 'broll': []},
+        treatment = {'semantic_lists': {'overlay': [row], 'broll': []},
                      'motion_queries': [{'segment_id': 's0', 'component_id': 'c', 'tags': ['并列', '要点']}]}
         with patch.object(motion_capabilities, 'load_catalog', return_value=catalog), \
              patch.object(selection, 'discover_candidates', return_value=native) as discover, \
@@ -1822,7 +1802,7 @@ class PinBoardInputClockTest(unittest.TestCase):
         design = {k: "当前原话的并列来电用途" for k in ("composition", "typography", "finish", "focus")}
         self.selection = {"schema_version": 1, "history_note": "独立时钟回归", "beats": [], "overlay_beats": []}
         self.director = {"segments": []}
-        self.treatment = {"overlay_style": "native", "semantic_lists": {"overlay": [], "broll": []}}
+        self.treatment = {"semantic_lists": {"overlay": [], "broll": []}}
         for index, (sid, start, end) in enumerate((("seg-001", 0, 4.625), ("seg-002", 4.625, 4.625 + 142 / 24))):
             self.selection["overlay_beats"].append({"segment_id": sid, "component_id": "scene", "semantic_row_id": sid,
                 "start": start, "end": end, "window_status": "resolved", "transcript": "来电用途", "semantic_goal": "并列", "required_change": "呈现用途",

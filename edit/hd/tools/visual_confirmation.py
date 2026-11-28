@@ -3803,7 +3803,7 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, nativ
     original = _read(_exact(root, proposal["inputs"]["treatment"]))
     if _core(director) != _core(frozen):
         raise VisualConfirmationError("execution changed authorized segment timing or visual plan")
-    for field in ("semantic_lists", "overlay_style", "motion_matches", "motion_queries", "generation_plan", "numbering_scope_id", "beat_sheet"):
+    for field in ("semantic_lists", "motion_matches", "motion_queries", "generation_plan", "numbering_scope_id", "beat_sheet"):
         if treatment.get(field) != original.get(field):
             raise VisualConfirmationError("execution changed authorized planning input: " + field)
     if original.get('overlay_selection'):

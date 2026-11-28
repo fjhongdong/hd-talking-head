@@ -17,19 +17,6 @@
     "max_gap_seconds": 15
   },
   "aroll_overlay": {
-    "style": {
-      "id": "warm-clay-3d",
-      "candidate_id": "overlay:barty-motion-graphics/motion-broll",
-      "motion_fps": 12,
-      "palette": {
-        "cream": "#f7deb5",
-        "ivory": "#fff0d2",
-        "terracotta": "#cc6946",
-        "deepTerracotta": "#ad4d2d",
-        "peach": "#e7a375",
-        "ink": "#472f27"
-      }
-    },
     "group_size": {
       "width_ratio": 0.68,
       "height_ratio": 0.0875
