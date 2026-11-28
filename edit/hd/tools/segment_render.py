@@ -36,7 +36,7 @@ FPS = 24
 WIDTH = 1080
 HEIGHT = 1920
 SOFT_SAFE_BOTTOM = 1700
-RENDERER_CONTRACT_VERSION = "hd-segment-component-compositor-v9-overlay-layout"
+RENDERER_CONTRACT_VERSION = "hd-segment-component-compositor-v10-overlay-group-size"
 _HASH_CHUNK_SIZE = 1024 * 1024
 _SHA256 = frozenset("0123456789abcdef")
 _JOURNAL_SUFFIX = ".publication-journal.json"
@@ -99,6 +99,21 @@ class _PreparedRender:
     family: str
     artifacts: tuple[broll_component_executor.ComponentArtifact, ...]
     frames: int
+
+
+@dataclass(frozen=True)
+class _OverlayPlacement:
+    x: int
+    y: int
+    width: int = WIDTH
+    height: int = HEIGHT
+
+
+def overlay_group_target() -> dict[str, int]:
+    defaults = Path(__file__).resolve().parents[3] / "references/production-defaults.json"
+    config = json.loads(defaults.read_text(encoding="utf-8"))["aroll_overlay"]
+    return {"width": round(WIDTH * config["group_size"]["width_ratio"]),
+            "height": round(HEIGHT * config["group_size"]["height_ratio"])}
 
 
 @dataclass(frozen=True)
@@ -546,7 +561,7 @@ def _layout(
 
 def _overlay_frame_bounds(
     path: Path, frame_count: int, *, top: int, height: int,
-) -> dict[int, tuple[int, int, float]]:
+) -> dict[int, tuple[int, int, int, int, float]]:
     # Ignore soft shadows and glows when locating the visible group. Use the
     # amount of visible content to distinguish the full layout from its entrance.
     layout_filter = (
@@ -571,16 +586,18 @@ def _overlay_frame_bounds(
             bounds[int(header.split()[0])] = (
                 int(fields["lavfi.bbox.x1"]),
                 int(fields["lavfi.bbox.x2"]) + 1,
+                top + int(fields["lavfi.bbox.y1"]),
+                top + int(fields["lavfi.bbox.y2"]) + 1,
                 float(fields["lavfi.signalstats.YAVG"]) * height,
             )
     return bounds
 
 
-def _automatic_overlay_x_offsets(
+def _automatic_overlay_layouts(
     recipe: Mapping[str, Any],
     artifacts: tuple[broll_component_executor.ComponentArtifact, ...],
     paths: tuple[Path, ...],
-) -> dict[str, int]:
+) -> dict[str, _OverlayPlacement]:
     if recipe["composition"]["family"] != "aroll_with_overlay":
         return {}
     components = {component["component_id"]: component for component in recipe["components"]}
@@ -596,22 +613,25 @@ def _automatic_overlay_x_offsets(
         translation = component["invocation_record"].get("canvas_translation") or {}
         groups[-1].append((artifact, path, component, translation))
 
-    offsets = {}
+    target = overlay_group_target()
+    placements = {}
     for group in groups:
-        # A time-overlapping group can include a separately rendered label for
-        # a target callout. Preserve their relationship if any layer is pinned.
-        if any(component.get("template_id") == "motion-graphics-native/callout_pin" or "x" in translation
+        # A group can include a callout or another explicitly positioned layer.
+        # Its target coordinate owns the layout of all the associated graphics.
+        if any(component.get("template_id") == "motion-graphics-native/callout_pin"
+               or "x" in translation or component["invocation_record"].get("canvas_alignment")
                for _, _, component, translation in group):
             continue
-        by_frame: dict[int, tuple[int, int, float]] = {}
-        lower, upper = -WIDTH, WIDTH
-        safe_lower, safe_upper = -WIDTH, WIDTH
+        by_frame: dict[int, tuple[int, int, int, int, float]] = {}
+        safe_left, safe_right, safe_top, safe_bottom = 0, WIDTH, 0, HEIGHT
         for artifact, path, component, translation in group:
             start = artifact.render_window["start_frame"]
             duration = artifact.render_window["end_frame"] - start
-            safe_left, top, width, height, _ = _layout(artifact, component["layer_role"])
+            left, top, width, height, _ = _layout(artifact, component["layer_role"])
+            safe_left, safe_right = max(safe_left, left), min(safe_right, left + width)
+            safe_top, safe_bottom = max(safe_top, top), min(safe_bottom, top + height)
+            y = translation.get("y", 0)
             if translation:
-                y = translation["y"]
                 top = max(0, -y)
                 height = min(HEIGHT, HEIGHT - y) - top
             is_image = artifact.artifact_media_type == "image"
@@ -619,25 +639,48 @@ def _automatic_overlay_x_offsets(
             if not bounds:
                 continue
             if is_image:
-                bounds = dict.fromkeys(range(duration), bounds[0])
-            left = min(row[0] for row in bounds.values())
-            right = max(row[1] for row in bounds.values())
-            lower, upper = max(lower, -left), min(upper, WIDTH - right)
-            safe_lower = max(safe_lower, safe_left - left)
-            safe_upper = min(safe_upper, safe_left + width - right)
-            for frame, (left, right, coverage) in bounds.items():
-                old_left, old_right, old_coverage = by_frame.get(start + frame, (WIDTH, 0, 0.0))
-                by_frame[start + frame] = min(left, old_left), max(right, old_right), coverage + old_coverage
+                bounds = dict.fromkeys(range(duration), next(iter(bounds.values())))
+            for frame, (left, right, top, bottom, coverage) in bounds.items():
+                old = by_frame.get(start + frame, (WIDTH, 0, HEIGHT, 0, 0.0))
+                by_frame[start + frame] = (min(left, old[0]), max(right, old[1]),
+                                            min(top + y, old[2]), max(bottom + y, old[3]),
+                                            coverage + old[4])
         if not by_frame:
             continue
-        left, right, _ = max(by_frame.values(), key=lambda row: (row[2], row[1] - row[0]))
-        # One constant shift preserves the relationship between overlapping
-        # layers and keeps the complete horizontal sweep inside the canvas.
-        if safe_lower <= safe_upper:
-            lower, upper = safe_lower, safe_upper
-        shift = (WIDTH - left - right) // 2
-        offsets.update((artifact.component_id, min(upper, max(lower, shift))) for artifact, *_ in group)
-    return offsets
+
+        sweep_left = min(row[0] for row in by_frame.values())
+        sweep_right = max(row[1] for row in by_frame.values())
+        sweep_top = min(row[2] for row in by_frame.values())
+        sweep_bottom = max(row[3] for row in by_frame.values())
+        left, right, top, bottom, _ = max(by_frame.values(), key=lambda row: (row[4], row[1] - row[0]))
+        if sweep_right - sweep_left > safe_right - safe_left:
+            safe_left, safe_right = 0, WIDTH
+
+        # Grow away from the presenter side of the existing placement, using
+        # the whole animation envelope to reserve entrances and exits.
+        above_presenter = sweep_bottom <= HEIGHT // 2
+        pivot = sweep_bottom if above_presenter else sweep_top
+        vertical_room = pivot - safe_top if above_presenter else safe_bottom - pivot
+        scale = 1.0
+        if safe_top <= sweep_top < sweep_bottom <= safe_bottom:
+            scale = max(1.0, min(
+                target["width"] / (right - left),
+                target["height"] / (bottom - top),
+                (safe_right - safe_left) / (sweep_right - sweep_left),
+                vertical_room / (sweep_bottom - sweep_top),
+                2.0,
+            ))
+
+        width, height = math.floor(WIDTH * scale), math.floor(HEIGHT * scale)
+        scale_x, scale_y = width / WIDTH, height / HEIGHT
+        shift = math.floor((WIDTH - scale_x * (left + right)) / 2)
+        lower = safe_left - math.floor(scale_x * sweep_left)
+        upper = safe_right - math.ceil(scale_x * sweep_right)
+        x = min(upper, max(lower, shift))
+        for artifact, _, _, translation in group:
+            y = round(pivot - scale_y * (pivot - translation.get("y", 0)))
+            placements[artifact.component_id] = _OverlayPlacement(x, y, width, height)
+    return placements
 
 
 def build_filter_graph(
@@ -646,7 +689,7 @@ def build_filter_graph(
     *,
     frames: int,
     camera_framings: Mapping[str, dict] | None = None,
-    overlay_x_offsets: Mapping[str, int] | None = None,
+    overlay_layouts: Mapping[str, _OverlayPlacement] | None = None,
 ) -> str:
     """Build the sole frame-level composition graph for approved artifacts."""
 
@@ -799,10 +842,10 @@ def build_filter_graph(
             canvas_index = next_canvas
             continue
         if composition.get("family") == "aroll_with_overlay":
-            automatic_x = (overlay_x_offsets or {}).get(artifact.component_id)
-            auto_centered = automatic_x is not None
-            if auto_centered:
-                offset_x = automatic_x
+            auto_layout = (overlay_layouts or {}).get(artifact.component_id)
+            auto_centered = auto_layout is not None
+            if auto_layout is not None:
+                offset_x, offset_y = auto_layout.x, auto_layout.y
             placement = ""
             if translation is None:
                 # Auto placement measures the complete group before shifting.
@@ -811,6 +854,12 @@ def build_filter_graph(
                 crop_width = WIDTH if auto_centered else width
                 placement = (f"crop={crop_width}:{height}:{crop_left}:{top},"
                              f"pad={WIDTH}:{HEIGHT}:{crop_left}:{top}:color=black@0,")
+            if auto_layout is not None and (auto_layout.width, auto_layout.height) != (WIDTH, HEIGHT):
+                placement += (
+                    "format=gbrap,premultiply=inplace=1,"
+                    f"scale={auto_layout.width}:{auto_layout.height}:flags=lanczos,"
+                    "unpremultiply=inplace=1,setsar=1,format=rgba,"
+                )
             # Composite before chroma subsampling so odd integer offsets are
             # not silently rounded by overlay's YUV420 default.
             overlay_format = ':format=rgb' if translation is not None or auto_centered else ''
@@ -1918,12 +1967,12 @@ def _render_segment_video(
             arroll_snapshot, artifact_snapshots = _snapshot_inputs(
                 job, artifacts, stage, arroll
             )
-            overlay_offsets = _automatic_overlay_x_offsets(
+            overlay_layout = _automatic_overlay_layouts(
                 prepared.recipe, prepared.artifacts, artifact_snapshots
             )
             graph = build_filter_graph(
                 prepared.recipe, prepared.artifacts, frames=prepared.frames,
-                camera_framings=cameras, overlay_x_offsets=overlay_offsets,
+                camera_framings=cameras, overlay_layouts=overlay_layout,
             )
             stage_video = stage / "segment.mp4"
             command = _ffmpeg_command(

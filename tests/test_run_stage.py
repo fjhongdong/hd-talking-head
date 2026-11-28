@@ -30,18 +30,22 @@ class CheckOnlyStageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             job = SimpleNamespace(job_dir=root, stages={'visual_direction': {'artifacts': []}})
-            base = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics'}
-            director = {'segments': [{'segment_id': 'seg-001', 'start': 0, 'end': 1, 'bindings': {
+            base = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics',
+                    'template_id': 'barty-motion-graphics/motion-broll'}
+            director = {'segments': [{'segment_id': 'seg-001', 'start': 2, 'end': 4, 'bindings': {
                 'waiting': base, 'dependent': base, 'ready': {**base, 'brief_sha256': 'a' * 64}},
-                'visual_strategy': {'mode': 'none', 'composition': {'component_dependencies': [
+                'visual_strategy': {'mode': 'none', 'composition': {'family': 'aroll_with_overlay', 'component_dependencies': [
                     {'component_id': 'dependent', 'depends_on': ['waiting']}]}, 'components': [
                     {'component_id': 'waiting', 'kind': 'code_generated'},
                     {'component_id': 'dependent', 'kind': 'code_generated'},
                     {'component_id': 'ready', 'kind': 'code_generated'}]}}]}
             semantic = {'row_id': 'one', 'quote': '先练熟，再组队放大。', 'semantic': '熟练后协作扩大产出。',
                         'visual_task': '分清练熟和组队两个状态。',
+                        'overlay_action': {'subject': '一组木块', 'initial_state': '一枚木块独自扣合',
+                                           'movement': '多枚同样的木块从两端合拢并接上它', 'result': '同组木块拼成完整拱桥'},
                         'required_content': {'order': {'meaning': '练熟先于组队'}},
-                        'components': [{'segment_id': 'seg-001', 'component_id': cid}
+                        'components': [{'segment_id': 'seg-001', 'component_id': cid,
+                                        'timing': {'action_start_frame': 54, 'settled_frame': 66, 'visible_until_frame': 95}}
                                        for cid in ('waiting', 'dependent', 'ready')]}
             treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'ready', 'brief_path': 'ready.json'}],
                          'semantic_lists': {'overlay': [semantic], 'broll': []}}
@@ -75,6 +79,14 @@ class CheckOnlyStageTests(unittest.TestCase):
                 self.assertEqual(native_action['proposal'], authorized['payload']['source'])
                 self.assertTrue(native_action['next'].startswith('Execute the original native workflow.'))
                 self.assertEqual(native_action['semantic_row'], semantic)
+                self.assertEqual(native_action['overlay_action'], semantic['overlay_action'])
+                self.assertEqual(native_action['overlay_local_timing'],
+                                 {'action_start_frame': 6, 'settled_frame': 18, 'visible_until_frame': 47})
+                self.assertEqual(native_action['overlay_style']['id'], 'warm-clay-3d')
+                build_argv = native_action['overlay_style']['build_argv']
+                self.assertTrue(Path(build_argv[1]).is_file())
+                self.assertEqual(build_argv[2:], ['--frames', '48', '--action-start-frame', '6',
+                    '--settled-frame', '18', '--visible-until-frame', '47'])
                 dispatch.assert_called_once_with(job, authorized['source'], treatment, ('seg-001', 'ready'),
                                                  'fixture', root / 'ready.json', 'a' * 64)
                 self.assertNotIn('same_template_context', native_action)
@@ -85,6 +97,9 @@ class CheckOnlyStageTests(unittest.TestCase):
                 self.assertEqual([(a['segment_id'], a['component_id']) for a in preparations], [('seg-001', 'waiting')])
                 self.assertEqual(preparations[0]['proposal'], native_action['proposal'])
                 self.assertEqual(preparations[0]['semantic_row'], native_action['semantic_row'])
+                self.assertEqual(preparations[0]['overlay_action'], native_action['overlay_action'])
+                self.assertEqual(preparations[0]['overlay_local_timing'], native_action['overlay_local_timing'])
+                self.assertEqual(preparations[0]['overlay_style'], native_action['overlay_style'])
                 self.assertEqual(preparations[0]['parent_subtitle_layout']['placement'], 'standard')
                 finalize.assert_not_called()
                 dispatch.side_effect = ValueError('stale prepared brief')

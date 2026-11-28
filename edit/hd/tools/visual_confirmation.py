@@ -495,8 +495,8 @@ def _rows(director, treatment, semantic_rows, generation_channels=None, *, job_d
                          "type": semantic_row["type"],
                          "spoken_text": semantic_row["quote"], "semantic": semantic_row["semantic"],
                          "visual_task": semantic_row["visual_task"],
-                         **({"required_content": semantic_row["required_content"]}
-                            if "required_content" in semantic_row else {}),
+                         **{field: semantic_row[field] for field in ("overlay_action", "required_content")
+                            if field in semantic_row},
                          **({"timing": timing} if timing is not None else {}),
                          "tags": tags, "source": source,
                          "generation_channel": "；".join(generation),
@@ -694,7 +694,10 @@ def _display_cell(value):
 
 
 def _display_visual_task(row, timings=None):
-    details = []
+    details = [row["visual_task"]]
+    action = row.get("overlay_action")
+    if action:
+        details.extend([f"{action['subject']} · {action['initial_state']}", action["movement"], action["result"]])
     for item in row.get("required_content", {}).values():
         terms = "、".join(f"「{term}」" for term in item.get("terms", []))
         details.append(item["meaning"] + (f"（须显示 {terms}）" if terms else ""))
@@ -707,7 +710,7 @@ def _display_visual_task(row, timings=None):
         start_text = f"{start / 24:.3f}s 开始关键动作，" if start is not None else ""
         details.append(start_text + f"{timing['settled_frame'] / 24:.3f}s 前落定，"
                        f"完整展示至 {timing['visible_until_frame'] / 24:.3f}s")
-    return "\n".join([row["visual_task"], *details])
+    return "\n".join(details)
 
 
 def confirmed_local_table(director, treatment, rows):
@@ -2202,6 +2205,7 @@ def _semantic_handoffs(treatment, proposal_ref):
 
     expressions = selected_expression_bases(treatment)
     return {key: {'proposal': proposal_ref, 'semantic_row': row,
+                  **({'overlay_action': row['overlay_action']} if 'overlay_action' in row else {}),
                   **({'timing': timing} if (timing := component_timing(row, key)) is not None else {}),
                   **({'expression_basis': expressions[key]} if key in expressions else {}),
                   **({'cinecode_input': material} if (material := _selected_cinecode_input(treatment, key)) else {})}
@@ -3799,7 +3803,7 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, nativ
     original = _read(_exact(root, proposal["inputs"]["treatment"]))
     if _core(director) != _core(frozen):
         raise VisualConfirmationError("execution changed authorized segment timing or visual plan")
-    for field in ("semantic_lists", "motion_matches", "motion_queries", "generation_plan", "numbering_scope_id", "beat_sheet"):
+    for field in ("semantic_lists", "overlay_style", "motion_matches", "motion_queries", "generation_plan", "numbering_scope_id", "beat_sheet"):
         if treatment.get(field) != original.get(field):
             raise VisualConfirmationError("execution changed authorized planning input: " + field)
     if original.get('overlay_selection'):

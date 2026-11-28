@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { group_size: groupSize } = require('../references/production-defaults.json').aroll_overlay;
 
 const args = process.argv.slice(2);
 function argument(name) {
@@ -41,17 +42,16 @@ async function render() {
       #icon { width: 78%; height: 78%; }
       #label {
         font: 700 48px/1.25 'PingFang SC', sans-serif;
-        padding: 0 24px; white-space: nowrap;
+        padding: 0 24px; box-sizing: border-box; white-space: normal; overflow-wrap: anywhere;
       }
     </style><div id="card"><div id="tile"><div id="icon"></div></div>
     <span id="label" hidden></span></div>`);
     await page.addScriptTag({ path: argument('--lottie') });
-    await page.evaluate(async ({ brief, data, interaction }) => {
+    await page.evaluate(async ({ brief, data, interaction, groupSize }) => {
       const card = document.getElementById('card');
       const tile = document.getElementById('tile');
       const label = document.getElementById('label');
       const { x, y, size } = brief.layout;
-      Object.assign(card.style, { left: x + 'px', top: y + 'px' });
       Object.assign(tile.style, { width: size + 'px', height: size + 'px' });
       const animation = lottie.loadAnimation({
         container: document.getElementById('icon'), renderer: 'svg',
@@ -72,14 +72,42 @@ async function render() {
         label.hidden = !text;
         card.classList.toggle('complete', completed);
       }
+      // Measure every actual label state with the loaded font, then scale the
+      // entire group. The bound nearest the presenter stays fixed.
+      const safeWidth = width - zone.left - zone.right;
+      const safeHeight = height - zone.bottom - y;
+      if (safeHeight < size || safeWidth < size || (brief.labels.length && safeWidth === size)) {
+        throw new Error('useAnimations group cannot fit the parent safe zone');
+      }
+      card.style.maxWidth = safeWidth + 'px';
+      label.style.maxWidth = Math.max(0, safeWidth - size) + 'px';
+      let groupWidth = size;
+      let groupHeight = size;
       for (const { text } of brief.labels) {
         showLabel(text, false);
         const box = card.getBoundingClientRect();
-        if (box.left < zone.left || box.top < zone.top || box.right > width - zone.right
-            || box.bottom > height - zone.bottom) {
-          throw new Error('Visible useAnimations label exceeds the parent safe zone');
-        }
+        groupWidth = Math.max(groupWidth, box.width);
+        groupHeight = Math.max(groupHeight, box.height);
       }
+      if (groupWidth > safeWidth + 0.01 || groupHeight > safeHeight + 0.01) {
+        throw new Error('Visible useAnimations group exceeds the parent safe zone');
+      }
+      const bottom = y + groupHeight;
+      const abovePresenter = bottom <= height / 2;
+      const room = abovePresenter ? bottom - zone.top : safeHeight;
+      const scale = Math.max(1, Math.min(width * groupSize.width_ratio / groupWidth,
+        height * groupSize.height_ratio / groupHeight, safeWidth / groupWidth, room / groupHeight));
+      const scaledWidth = groupWidth * scale;
+      const left = Math.max(zone.left, Math.min(width - zone.right - scaledWidth,
+        x + (groupWidth - scaledWidth) / 2));
+      Object.assign(card.style, {
+        left: left + 'px',
+        top: (abovePresenter ? bottom - groupHeight * scale : y) + 'px',
+        width: groupWidth + 'px',
+        minHeight: groupHeight + 'px',
+        transformOrigin: 'top left',
+        transform: `scale(${scale})`,
+      });
       window.renderOverlay = frame => {
         const endFrame = animation.totalFrames - 0.001;
         const elapsed = frame * animation.frameRate / fps;
@@ -98,7 +126,7 @@ async function render() {
         const state = brief.labels.findLastIndex(item => item.start_frame <= frame);
         showLabel(state >= 0 ? brief.labels[state].text : '', state > 0);
       };
-    }, { brief, data, interaction });
+    }, { brief, data, interaction, groupSize });
 
     // Inspect the native icon alone; a visible host card cannot make an empty icon pass.
     const nativeFrames = Math.ceil((data.op - data.ip) / data.fr * fps);

@@ -2,6 +2,8 @@
 from __future__ import annotations
 import math
 
+OVERLAY_ACTION_FIELDS = ("subject", "initial_state", "movement", "result")
+
 class SemanticVisualPlanError(ValueError):
     pass
 
@@ -101,6 +103,11 @@ def validate_semantic_lists(treatment, director, speech=None):
             for key in ("quote", "semantic", "visual_task"):
                 if not isinstance(row.get(key), str) or not row[key].strip():
                     raise SemanticVisualPlanError("semantic rows need quote, semantic and visual_task")
+            if "overlay_action" in row:
+                action = row["overlay_action"]
+                if (typ != "overlay" or not isinstance(action, dict) or set(action) != set(OVERLAY_ACTION_FIELDS)
+                        or any(not isinstance(value, str) or not value.strip() for value in action.values())):
+                    raise SemanticVisualPlanError("overlay_action needs subject, initial_state, movement and result")
             if "required_content" in row:
                 _validate_required_content(row["required_content"])
             duplicate_key = (start, end, row["semantic"], row["visual_task"])

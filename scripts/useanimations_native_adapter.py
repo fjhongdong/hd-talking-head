@@ -108,9 +108,6 @@ def validate_brief(payload, *, dependency_id=DEPENDENCY_ID):
         native_frames = math.ceil(row['min_duration_seconds'] * 24)
         if row['interaction'] in {'click-toggle', 'hover'} and c['frames'] - labels[1]['start_frame'] < native_frames:
             raise ValueError('Native transition does not fit after the second state')
-    if labels and (x + size + max(48 * len(label['text']) + 48 for label in labels) > 1080-zone['right']
-                   or max(size, 60) + y > 1920-zone['bottom']):
-        raise ValueError('Caption exceeds parent safe zone')
     if not isinstance(b['semantic_goal'],str) or not b['semantic_goal'].strip(): raise ValueError('Missing icon meaning')
     req=b['template_request']
     if not isinstance(req,dict) or set(req)!={'semantic_family','information_units','numeric_values','numeric_scale'} or not isinstance(req['semantic_family'],str) or not req['semantic_family'] or req['information_units']!=1 or req['numeric_values']!=[] or req['numeric_scale']!='not_applicable': raise ValueError('Invalid semantic request')

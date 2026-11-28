@@ -254,8 +254,9 @@ def _identity(row, typ):
     # the meaning against which a host reviewed a candidate.
     payload={k:row[k] for k in ("row_id","quote","start_word","end_word","semantic","visual_task")}
     payload["type"]=typ
-    if "required_content" in row:
-        payload["required_content"] = row["required_content"]
+    for key in ("overlay_action", "required_content"):
+        if key in row:
+            payload[key] = row[key]
     return hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
 
 def candidate_review_identity(candidate):
@@ -517,7 +518,9 @@ def _invalidate_changed_reviews(treatment, items, catalog, director):
 
 def _query(row, tags):
     """Retain the whole task; lexical evidence only orders its review pool."""
+    action = row.get("overlay_action", {})
     return "\n".join([row[key] for key in ("quote", "semantic", "visual_task")]
+                     + [action[key] for key in semantic_visual_plan.OVERLAY_ACTION_FIELDS if key in action]
                      + [item["meaning"] for _, item in sorted(row.get("required_content", {}).items())]
                      + [" ".join(tags)])
 
@@ -588,7 +591,7 @@ def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
     out, rebound = copy.deepcopy(treatment), []
     if treatment.get("source_clock") != previous.get("source_clock"):
         raise ValueError("visual task rebinding cannot change the approved word clock")
-    editable = {"semantic", "visual_task", "required_content"}
+    editable = {"semantic", "visual_task", "overlay_action", "required_content"}
     for row_id, (before, typ, tags) in old_items.items():
         after, current_type, current_tags = current[row_id]
         if (typ != current_type or tags != current_tags
