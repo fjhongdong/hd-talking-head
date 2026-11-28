@@ -29,11 +29,11 @@ def prepare_request(job, purpose, arguments, *, request_id, input_files=None):
             "arguments": generation_model.prepare_arguments(job.job_dir, channel, arguments),
             "input_files": list(input_files or [])}
 
-def prepare_cover_request(job, arguments, *, request_id):
-    """Bind the approved person and composition references for this cover call."""
+def prepare_cover_request(job, arguments, *, request_id, aspect_ratio=None):
+    """Build the actual cover prompt and bind its approved visual references."""
     from . import cover_direction, state
     job = _job(job)
-    cover_direction.load_approved_cover_direction(job)
+    cover_record = cover_direction.load_approved_cover_direction(job)
     approved = job.stages["cover_direction"]["artifacts"]
     frozen = {}
     for record in approved:
@@ -65,6 +65,11 @@ def prepare_cover_request(job, arguments, *, request_id):
               else state._artifact_record(job, path) for path in paths]
     args = copy.deepcopy(arguments)
     args["referenced_image_paths"] = [str(path) for path in paths]
+    direction = cover_record["direction"]
+    ratio = aspect_ratio if aspect_ratio is not None else direction["output_aspect_ratio"]
+    args["prompt"] = cover_direction.cover_image_prompt(
+        direction, args.get("prompt"), ratio, cover_design=args.pop("cover_design", None),
+    )
     request = prepare_request(job, "image", args, request_id=request_id, input_files=inputs)
     generation_queue._inputs(job.job_dir, request)
     return request

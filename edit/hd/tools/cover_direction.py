@@ -73,6 +73,42 @@ class CoverDirectionError(ValueError):
     """Raised when a cover direction is invalid, stale, or not approved."""
 
 
+def cover_image_prompt(direction: Mapping, creative_prompt: object, aspect_ratio: str, *, cover_design: object) -> str:
+    """Compose the first render prompt from the brief and this image's layout."""
+    if aspect_ratio not in _OUTPUT_ASPECT_RATIOS:
+        raise CoverDirectionError("cover image aspect ratio is invalid")
+    if not isinstance(creative_prompt, str) or not creative_prompt.strip():
+        raise CoverDirectionError("cover prompt must be text")
+    design = _object(cover_design, {"viewer_hook", "title_focus", "title_treatment"}, "cover design")
+    hook = _text(design["viewer_hook"], "viewer_hook")
+    focus = _text(design["title_focus"], "title_focus")
+    treatment = _text(design["title_treatment"], "title_treatment")
+    title = direction["title"]
+    if focus not in title:
+        raise CoverDirectionError("title_focus must appear in the approved title")
+    placement = "按本画幅独立重排人物、标题和道具，并为关键字与五官留出空间。"
+    if aspect_ratio == "9:16":
+        placement = "采用纵向节奏，给标题和人物各自留出连续的空间，保持手势和关键道具完整。"
+    elif aspect_ratio == "3:4":
+        placement = "利用较宽画幅重新安排标题与人物的并列或错落关系，按本画幅重排字组和留白。"
+    lines = [
+        f"生成一张 {aspect_ratio} 封面。主标题原文为「{title}」，断行后按原顺序完整阅读。",
+        f"用图文让观众一眼理解这个看点「{hook}」。将「{focus}」做成标题的主焦点。"
+        f"按本期设计组织标题「{treatment}」。看点说明用于指导画面，屏显标题沿用原文。",
+        placement,
+        "头像参考只用于人物身份，方向预览只用于理解视觉关系。按本张封面的构图重新安排字组、场景和动作。",
+        f"本期人物表情为「{direction['expression']}」。用眉眼、视线、嘴形和脸颊表现指定情绪，"
+        "在手机缩略图中也能看清，保留本人的脸型、五官比例和真实肌肉变化。",
+    ]
+    if direction["composition"]["style_id"] == _PUNK_STYLE:
+        lines.append(
+            "让核心字组首先被看见，再用对齐、留白或视线把读者带向次级字组和关键画面。"
+            "用与题材匹配的中文展示字形和清楚的图底对比，让字组造型或图文关系带有本期主题的特征。"
+            "若设计包含交叠，保留标题的关键笔画。把字组和远近层次做到手机缩略图也一眼可辨。"
+        )
+    return "\n\n".join((creative_prompt.strip(), "\n".join(lines)))
+
+
 def _object(value: Any, keys: set[str], label: str) -> Dict[str, Any]:
     if not isinstance(value, Mapping) or set(value) != keys:
         raise CoverDirectionError(f"{label} schema is invalid")

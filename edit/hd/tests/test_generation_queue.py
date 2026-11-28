@@ -241,17 +241,40 @@ class GenerationQueueTests(unittest.TestCase):
         person = self.job / '03-cover-direction/person-reference.png'
         preview = self.job / '03-cover-direction/direction-preview.png'
         candidate = self.job / 'current-candidate.png'; candidate.write_bytes(b'current candidate fixture')
+        design = {
+            'viewer_hook': '把说出来的需求做成自己电脑上的软件',
+            'title_focus': '软件',
+            'title_treatment': '手写开口做放在左上便笺，软件用大宋体，与右侧电脑形成并列',
+        }
         arguments = {'prompt': '图1身份，图2当前场景',
+                      'cover_design': design,
                       'referenced_image_paths': [str(person), str(candidate), str(candidate)]}
         original = copy.deepcopy(arguments)
-        with mock.patch.object(cover_direction, 'load_approved_cover_direction', return_value={}) as approved, \
+        record = {'direction': {'title': '开口做自己的软件', 'expression': '惊喜，抬眉张嘴',
+                                 'output_aspect_ratio': '9:16',
+                                 'composition': {'style_id': 'interleaved-title-editorial-poster'}}}
+        with mock.patch.object(cover_direction, 'load_approved_cover_direction', return_value=record) as approved, \
              mock.patch.object(channels, 'selected_channel', return_value=self.config['providers'][0]):
-            request = channels.prepare_cover_request(job, arguments, request_id='ordinary-name')
-            default = channels.prepare_cover_request(job, {'prompt': '默认封面'}, request_id='no-references')
+            request = channels.prepare_cover_request(job, arguments, request_id='ordinary-name', aspect_ratio='3:4')
+            default = channels.prepare_cover_request(job, {
+                'prompt': '默认封面',
+                'cover_design': {**design, 'title_treatment': '便笺在上，主字组在中，人物和电脑在下'},
+            }, request_id='no-references')
             generic = channels.prepare_request(job, 'image', {'prompt': '正文图'}, request_id='cover-image')
         self.assertEqual(approved.call_args_list, [mock.call(job), mock.call(job)])
         self.assertEqual(arguments, original)
-        self.assertEqual(request['arguments']['prompt'], arguments['prompt'])
+        prompt = request['arguments']['prompt']
+        self.assertTrue(prompt.startswith(arguments['prompt']))
+        self.assertIn('3:4', prompt)
+        self.assertIn('开口做自己的软件', prompt)
+        self.assertIn('惊喜，抬眉张嘴', prompt)
+        self.assertIn(design['viewer_hook'], prompt)
+        self.assertIn('将「软件」做成标题的主焦点', prompt)
+        self.assertIn(design['title_treatment'], prompt)
+        self.assertIn('便笺在上，主字组在中，人物和电脑在下', default['arguments']['prompt'])
+        self.assertIn('9:16', default['arguments']['prompt'])
+        self.assertNotIn('9:16', prompt)
+        self.assertNotIn('cover_design', request['arguments'])
         self.assertEqual(request['arguments']['referenced_image_paths'], list(map(str, (person, candidate, candidate, preview))))
         self.assertEqual(request['arguments']['referenced_image_paths'][1], str(candidate))
         self.assertEqual(default['arguments']['referenced_image_paths'], list(map(str, (person, preview))))
@@ -306,11 +329,12 @@ class GenerationQueueTests(unittest.TestCase):
         command = importlib.util.module_from_spec(spec); spec.loader.exec_module(command)
         arguments = self.job / 'arguments.json'; arguments.write_text('{"prompt":"actual prompt"}')
         with mock.patch.object(sys, 'argv', ['run_generation.py', '--project-root', str(project),
-                '--job', str(self.job), 'prepare-cover', '--request-id', 'explicit-cover', '--arguments-json', str(arguments)]), \
+                '--job', str(self.job), 'prepare-cover', '--request-id', 'explicit-cover',
+                '--arguments-json', str(arguments), '--aspect-ratio', '3:4']), \
              mock.patch.object(channels, 'prepare_cover_request', return_value={'id': 'explicit-cover'}) as prepare, \
              contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(command.main(), 0)
-        prepare.assert_called_once_with(self.job, {'prompt': 'actual prompt'}, request_id='explicit-cover')
+        prepare.assert_called_once_with(self.job, {'prompt': 'actual prompt'}, request_id='explicit-cover', aspect_ratio='3:4')
 
     def _generated_upload(self, *, metadata_bytes=3_200_000, padding="", noise=False, blur=0):
         from PIL import Image, ImageFilter, PngImagePlugin

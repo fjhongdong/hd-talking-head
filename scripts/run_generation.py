@@ -25,6 +25,7 @@ def main():
     prepare_cover = commands.add_parser("prepare-cover")
     prepare_cover.add_argument("--request-id", required=True)
     prepare_cover.add_argument("--arguments-json", type=Path, required=True)
+    prepare_cover.add_argument("--aspect-ratio", help="composition for this cover, defaults to the approved direction")
     add = commands.add_parser("add")
     add.add_argument("--plan-json", type=Path, required=True)
     add.add_argument("--plan-sha256", required=True)
@@ -55,7 +56,7 @@ def main():
             request_id=args.request_id, input_files=_read(args.input_files_json) if args.input_files_json else [])
     elif args.command == "prepare-cover":
         result = generation_channels.prepare_cover_request(args.job, _read(args.arguments_json),
-            request_id=args.request_id)
+            request_id=args.request_id, aspect_ratio=args.aspect_ratio)
     elif args.command == "add":
         result = generation_queue.add(args.job, _read(args.plan_json), args.user_confirmation, args.plan_sha256)
     elif args.command == "next":

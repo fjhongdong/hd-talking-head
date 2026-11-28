@@ -180,7 +180,10 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     if director_brief is None or treatment is None:
         return _summary(job, 'visual_direction', actions=[{
             'action': 'provide_visual_plan', 'arguments': ['--director-brief', '--treatment'],
-            'next': '先分列贴片与 B-roll 的语义清单。每项 visual_task 写清可见主体和动作、结果或对照。'
+            'next': '按 references/visual-quality-contract.md 的“动效数量与节奏”，从剪后原话一次找齐'
+                    '能独立拍清并留足停留的视觉变化，先分列贴片与 B-roll，再定两类数量。'
+                    '需要看清真实表情或手势的段落留给真人，同一变化的连续动作合在一起。'
+                    '每项 visual_task 写清可见主体和动作、结果或对照。'
                     '精确数字、原文引语或静态资料也可直接成为主体。required_content 只补必须保留的画面要点、事实与文字。'
                     '匹配一次，核实候选能力和所需素材，再最大化渠道、最大化模板，最后校时。'}])
     reviewed = _json(_path(job, reviewed_visual_text)) if reviewed_visual_text else None
